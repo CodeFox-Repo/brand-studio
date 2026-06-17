@@ -82,6 +82,11 @@ uv run harness render <campaign.yaml> --brand <brand.lock.yaml>
 uv run harness publish <campaign-name> --channel repo --publish
 ```
 
+When the user asks for a full generation, a new version, or assets ready for
+project consumption, do not stop after `render`. `render` only writes the local
+`outputs/` buffer; follow it with repo publish so the consumable snapshot lands
+under `published/<brand-id>/<brand-version>/`.
+
 For safe smoke tests:
 
 ```bash

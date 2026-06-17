@@ -1,0 +1,236 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T19:06:34.816222+00:00",
+  "dry_run": false,
+  "brand_lock_path": "workspace/brand/proposals/kobe-main-visual.lock.yaml",
+  "campaign_path": "workspace/campaigns/kobe-main-visual-launch.campaign.yaml",
+  "brand_lock": {
+    "version": "1.2.0",
+    "brand": {
+      "id": "kobe",
+      "name": "kobe"
+    },
+    "provider": {
+      "gateway": "openai",
+      "model": "gpt-image-2",
+      "params": {
+        "seed_strategy": "fixed",
+        "seed": 24019,
+        "quality": "high",
+        "timeout_seconds": 180,
+        "retry_attempts": 3,
+        "output_format": "png"
+      }
+    },
+    "global": {
+      "color": {
+        "ink-black": {
+          "$value": "#101820",
+          "$type": "color"
+        },
+        "panel-navy": {
+          "$value": "#1A2632",
+          "$type": "color"
+        },
+        "warm-cream": {
+          "$value": "#F7F1E5",
+          "$type": "color"
+        },
+        "soft-cream": {
+          "$value": "#FFFCF5",
+          "$type": "color"
+        },
+        "mint-green": {
+          "$value": "#2FE6A7",
+          "$type": "color"
+        },
+        "amber": {
+          "$value": "#FFB000",
+          "$type": "color"
+        },
+        "coral": {
+          "$value": "#E84A5F",
+          "$type": "color"
+        },
+        "muted-slate": {
+          "$value": "#748490",
+          "$type": "color"
+        }
+      },
+      "typography": {
+        "terminal-face": {
+          "$value": "monospaced terminal UI typography, bold readable launch headline, precise pane labels, no fake paragraph blocks",
+          "$type": "fontFamily"
+        }
+      },
+      "style-fragment": {
+        "screenshot-aesthetic": {
+          "$value": "authentic SSH terminal product screenshot atmosphere, dark TUI workspace, left tasks sidebar, center agent engine pane, right changes and shell panes, tmux-like borders, keyboard shortcut footer, terminal-native workflow density",
+          "$type": "text"
+        },
+        "reference-palette": {
+          "$value": "marketing hero guided by the main visual reference: warm cream editorial canvas, dark ink product blocks, mint routing traces, amber active highlights, coral status accents, crisp black outlines, restrained grid structure, flat graphic clarity around the real terminal interface",
+          "$type": "text"
+        },
+        "launch-polish": {
+          "$value": "turn the raw kobe screenshot into a polished product launch visual while preserving real terminal legibility, KOBE brand presence, parallel agent orchestration, isolated worktree lanes, and a confident developer-tool mood",
+          "$type": "text"
+        }
+      },
+      "negative": {
+        "global-exclude": {
+          "$value": "browser chrome, glossy SaaS cards, cartoon mascot, stock photo, people, celebrity athlete, basketball imagery, fake unreadable paragraphs, random icons, excessive neon, cluttered sci-fi dashboard, malformed main headline, watermark",
+          "$type": "text"
+        }
+      },
+      "reference": {
+        "tui-screenshot": {
+          "$value": "workspace/references/kobe-tui-screenshot.png",
+          "$type": "asset"
+        },
+        "main-visual": {
+          "$value": "workspace/references/main_visual.png",
+          "$type": "asset"
+        }
+      }
+    },
+    "alias": {
+      "style": {
+        "launch-hero": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.screenshot-aesthetic}, {global.style-fragment.reference-palette}, {global.style-fragment.launch-polish}",
+            "palette": [
+              "{global.color.ink-black}",
+              "{global.color.panel-navy}",
+              "{global.color.warm-cream}",
+              "{global.color.soft-cream}",
+              "{global.color.mint-green}",
+              "{global.color.amber}",
+              "{global.color.coral}",
+              "{global.color.muted-slate}"
+            ],
+            "typography": "{global.typography.terminal-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": [
+              "{global.reference.tui-screenshot}",
+              "{global.reference.main-visual}"
+            ]
+          }
+        },
+        "social-default": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.screenshot-aesthetic}, {global.style-fragment.reference-palette}",
+            "palette": [
+              "{global.color.ink-black}",
+              "{global.color.warm-cream}",
+              "{global.color.mint-green}",
+              "{global.color.amber}",
+              "{global.color.coral}"
+            ],
+            "typography": "{global.typography.terminal-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": [
+              "{global.reference.tui-screenshot}",
+              "{global.reference.main-visual}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "campaign": {
+    "name": "kobe-main-visual-launch",
+    "brief": "kobe 宣发主视觉：用参考图配色重做终端产品海报",
+    "style": "launch-hero",
+    "content": {
+      "headline": "Run parallel coding agents from any terminal.",
+      "subject": "a polished promotional hero for kobe, an SSH-friendly TUI orchestrator for Claude Code, Codex, and Copilot agents; show the real terminal IDE as the product focal point with left task queue, central agent engine pane, right changes and shell panes, persistent sessions, and parallel worktree lanes; keep it product-led and legible for a marketing launch image"
+    },
+    "deliverables": [
+      {
+        "id": "hero-card",
+        "size": [
+          1200,
+          630
+        ]
+      }
+    ]
+  },
+  "resolved_style": {
+    "name": "launch-hero",
+    "prompt": "authentic SSH terminal product screenshot atmosphere, dark TUI workspace, left tasks sidebar, center agent engine pane, right changes and shell panes, tmux-like borders, keyboard shortcut footer, terminal-native workflow density, marketing hero guided by the main visual reference: warm cream editorial canvas, dark ink product blocks, mint routing traces, amber active highlights, coral status accents, crisp black outlines, restrained grid structure, flat graphic clarity around the real terminal interface, turn the raw kobe screenshot into a polished product launch visual while preserving real terminal legibility, KOBE brand presence, parallel agent orchestration, isolated worktree lanes, and a confident developer-tool mood",
+    "palette": [
+      "#101820",
+      "#1A2632",
+      "#F7F1E5",
+      "#FFFCF5",
+      "#2FE6A7",
+      "#FFB000",
+      "#E84A5F",
+      "#748490"
+    ],
+    "typography": "monospaced terminal UI typography, bold readable launch headline, precise pane labels, no fake paragraph blocks",
+    "negative": "browser chrome, glossy SaaS cards, cartoon mascot, stock photo, people, celebrity athlete, basketball imagery, fake unreadable paragraphs, random icons, excessive neon, cluttered sci-fi dashboard, malformed main headline, watermark",
+    "references": [
+      "workspace/references/kobe-tui-screenshot.png",
+      "workspace/references/main_visual.png"
+    ]
+  },
+  "provider": {
+    "gateway": "openai",
+    "model": "gpt-image-2",
+    "params": {
+      "seed_strategy": "fixed",
+      "seed": 24019,
+      "timeout_seconds": 180,
+      "retry_attempts": 3,
+      "output_format": "png",
+      "quality": "high"
+    }
+  },
+  "assets": [
+    {
+      "id": "hero-card",
+      "file": "hero-card.png",
+      "size": [
+        1200,
+        630
+      ],
+      "seed": 24019,
+      "prompt": "Brand style: authentic SSH terminal product screenshot atmosphere, dark TUI workspace, left tasks sidebar, center agent engine pane, right changes and shell panes, tmux-like borders, keyboard shortcut footer, terminal-native workflow density, marketing hero guided by the main visual reference: warm cream editorial canvas, dark ink product blocks, mint routing traces, amber active highlights, coral status accents, crisp black outlines, restrained grid structure, flat graphic clarity around the real terminal interface, turn the raw kobe screenshot into a polished product launch visual while preserving real terminal legibility, KOBE brand presence, parallel agent orchestration, isolated worktree lanes, and a confident developer-tool mood\nCampaign brief: kobe 宣发主视觉：用参考图配色重做终端产品海报\nSubject: a polished promotional hero for kobe, an SSH-friendly TUI orchestrator for Claude Code, Codex, and Copilot agents; show the real terminal IDE as the product focal point with left task queue, central agent engine pane, right changes and shell panes, persistent sessions, and parallel worktree lanes; keep it product-led and legible for a marketing launch image\nDeliverable: hero-card, 1200x630px\nHeadline text to render exactly: \"Run parallel coding agents from any terminal.\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #101820, #1A2632, #F7F1E5, #FFFCF5, #2FE6A7, #FFB000, #E84A5F, #748490\nTypography direction for visible text: monospaced terminal UI typography, bold readable launch headline, precise pane labels, no fake paragraph blocks\nRespect brand reference assets: workspace/references/kobe-tui-screenshot.png, workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "browser chrome, glossy SaaS cards, cartoon mascot, stock photo, people, celebrity athlete, basketball imagery, fake unreadable paragraphs, random icons, excessive neon, cluttered sci-fi dashboard, malformed main headline, watermark",
+      "provider_metadata": {
+        "gateway": "openai",
+        "model": "gpt-image-2",
+        "status_code": 200,
+        "openai_size": "1536x1024",
+        "requested_size": [
+          1200,
+          630
+        ],
+        "resized_to_requested_size": true,
+        "response": {
+          "created": 1781723345,
+          "background": "opaque",
+          "data": [
+            {
+              "b64_json": "[redacted image payload]"
+            }
+          ],
+          "output_format": "png",
+          "quality": "high",
+          "size": "1536x1024",
+          "usage": {
+            "input_tokens": "[redacted]",
+            "input_tokens_details": "[redacted]",
+            "output_tokens": "[redacted]",
+            "output_tokens_details": "[redacted]",
+            "total_tokens": "[redacted]"
+          }
+        }
+      }
+    }
+  ]
+}

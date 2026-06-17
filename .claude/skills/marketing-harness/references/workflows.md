@@ -61,6 +61,9 @@ outputs/feature-x-launch/
 └── run.lock.json
 ```
 
+This is only the local render buffer. For any output the user expects projects
+to consume, immediately run the repo publish step below.
+
 ## Publish To Repo
 
 Dry-run:
@@ -94,7 +97,7 @@ Use this when a design skill, Claude, or Codex is responsible for style producti
 
 Design skill routing is intentionally fuzzy:
 
-- If the user writes a hint after `/marketing-harness`, honor it first, for example "use local frontend-design" or "prefer claude-design".
+- If the user writes a hint after an explicit skill mention such as `$marketing-harness`, honor it first, for example "use local frontend-design" or "prefer claude-design".
 - If the user does not name one, use an already-installed local design skill that fits brand/frontend/visual design.
 - If none is available, stop. Do not install, clone, or download a fallback unless the user explicitly asks.
 - The built-in local harness producer is only a deterministic scaffold; do not treat it as a replacement for creative style production from scratch unless the user explicitly accepts that tradeoff.

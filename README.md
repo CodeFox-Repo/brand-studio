@@ -178,7 +178,7 @@ provider:
 
 - `<asset-id>.<ext>`: 每个规格的成品物料。
 - `run.lock.json`: 本次 brand lock 快照、campaign、实际 seed/参数、时间戳、provider 元数据。
-- `manifest.json`: 项目方消费的稳定 contract。
+- `manifest.json`: 本地 render buffer 的 contract 草稿；发布后项目方消费 `published/<brand-id>/<brand-version>/artifacts/<campaign>/manifest.json`。
 
 manifest 最小消费示例：
 
@@ -189,6 +189,8 @@ manifest = json.load(open("outputs/feature-x-launch/manifest.json", encoding="ut
 hero = next(asset for asset in manifest["assets"] if asset["id"] == "web-banner")
 print(hero["url"] or hero["path"])
 ```
+
+`outputs/` 不提交、不作为项目方消费入口。完整生成流程必须在 render 成功后继续 `harness publish <campaign> --channel repo --publish`，把快照写入 `published/<brand-id>/<brand-version>/`。
 
 项目方应 pin `brand_lock_version` 或 release artifact 版本，不应直接运行生成。
 
@@ -328,9 +330,9 @@ HARNESS_REPO_PUBLISH_DIR # variable, defaults to published
 在 Claude Code 里以本仓库为工作目录打开时，`.claude/skills/marketing-harness/` 会作为项目级 skill 使用。显式调用示例：
 
 ```text
-/marketing-harness 校验 example campaign
-/marketing-harness 从零做品牌风格，优先用本地 frontend-design
-/marketing-harness dry-run render workspace/campaigns/example.campaign.yaml
+使用 marketing-harness skill，校验 example campaign
+使用 marketing-harness skill，从零做品牌风格，优先用本地 frontend-design
+使用 marketing-harness skill，dry-run render workspace/campaigns/example.campaign.yaml
 ```
 
 ### Codex 全局使用
@@ -349,13 +351,39 @@ ln -s /Users/narwhal/proj/marketing-harness/.claude/skills/marketing-harness \
 readlink ~/.codex/skills/marketing-harness
 ```
 
-重开 Codex 会话后使用自然语言点名：
+重开 Codex 会话后，用 `/skills` 选择 `marketing-harness`，或在 prompt 里显式 mention：
+
+```text
+$marketing-harness 校验 example campaign
+$marketing-harness 从零做品牌风格，优先用本地 frontend-design
+$marketing-harness dry-run render workspace/campaigns/example.campaign.yaml
+```
+
+也可以使用自然语言点名：
 
 ```text
 使用 marketing-harness skill，校验 example campaign
 使用 marketing-harness skill，从零做品牌风格，优先用本地 frontend-design
 使用 marketing-harness skill，dry-run render workspace/campaigns/example.campaign.yaml
 ```
+
+注意：Codex 不会按 skill 名自动生成 bare slash command，所以 `/marketing-harness` 不是默认入口；`/` 菜单里的 skill 入口是 `/skills`。
+
+如果确实想从 slash 菜单启动一个固定提示，可以额外创建 Codex custom prompt alias。custom prompts 已被 Codex 文档标记为 deprecated，但仍可用：
+
+```bash
+mkdir -p ~/.codex/prompts
+cat > ~/.codex/prompts/marketing-harness.md <<'EOF'
+---
+description: Use the marketing-harness skill from this repository
+argument-hint: [REQUEST]
+---
+
+Use $marketing-harness. $ARGUMENTS
+EOF
+```
+
+重启 Codex 后从 slash 菜单使用 `/prompts:marketing-harness ...`。
 
 ### Design Skill 路由
 
