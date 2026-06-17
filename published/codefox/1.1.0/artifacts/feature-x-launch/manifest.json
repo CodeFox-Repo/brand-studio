@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "campaign": "feature-x-launch",
+  "brand": {
+    "id": "codefox",
+    "name": "CodeFox",
+    "version": "1.1.0"
+  },
+  "brand_lock_version": "1.1.0",
+  "generated_at": "2026-06-17T05:35:10.713218+00:00",
+  "provider": {
+    "gateway": "openai",
+    "model": "gpt-image-1.5"
+  },
+  "assets": [
+    {
+      "id": "wechat-header",
+      "file": "wechat-header.svg",
+      "path": "artifacts/feature-x-launch/wechat-header.svg",
+      "url": "repo://published/codefox/1.1.0/artifacts/feature-x-launch/wechat-header.svg",
+      "size": [
+        900,
+        383
+      ],
+      "mime_type": "image/svg+xml",
+      "checksum_sha256": "8c5bc96aeec59cfe390b833c2b4fc69ceea359f0e85041f7813dbac2b04095e1",
+      "seed": 12345
+    },
+    {
+      "id": "moments-square",
+      "file": "moments-square.svg",
+      "path": "artifacts/feature-x-launch/moments-square.svg",
+      "url": "repo://published/codefox/1.1.0/artifacts/feature-x-launch/moments-square.svg",
+      "size": [
+        1080,
+        1080
+      ],
+      "mime_type": "image/svg+xml",
+      "checksum_sha256": "fa190e076afce84cc7dd2359ba64f75ed4f0e35c8aa3e9728602197d0f4e6215",
+      "seed": 12345
+    },
+    {
+      "id": "poster",
+      "file": "poster.svg",
+      "path": "artifacts/feature-x-launch/poster.svg",
+      "url": "repo://published/codefox/1.1.0/artifacts/feature-x-launch/poster.svg",
+      "size": [
+        1080,
+        1920
+      ],
+      "mime_type": "image/svg+xml",
+      "checksum_sha256": "3c680b6ea40f3b34d739442582c09d03bce43f039732ef5e3377252e5fbd3bea",
+      "seed": 12345
+    },
+    {
+      "id": "web-banner",
+      "file": "web-banner.svg",
+      "path": "artifacts/feature-x-launch/web-banner.svg",
+      "url": "repo://published/codefox/1.1.0/artifacts/feature-x-launch/web-banner.svg",
+      "size": [
+        1920,
+        600
+      ],
+      "mime_type": "image/svg+xml",
+      "checksum_sha256": "c142bc9ac1d876da84f5fc901e7d8ca9f6a54fff29a10f41a04964ff49d5f845",
+      "seed": 12345
+    },
+    {
+      "id": "x-card",
+      "file": "x-card.svg",
+      "path": "artifacts/feature-x-launch/x-card.svg",
+      "url": "repo://published/codefox/1.1.0/artifacts/feature-x-launch/x-card.svg",
+      "size": [
+        1200,
+        630
+      ],
+      "mime_type": "image/svg+xml",
+      "checksum_sha256": "867279a32800ebcb85af94f9b6ee813e488b6d09d30942c813e840aeeda1828b",
+      "seed": 12345
+    }
+  ],
+  "publish_channel": "repo",
+  "storage": {
+    "channel": "repo",
+    "root": "published",
+    "snapshot_path": "published/codefox/1.1.0",
+    "artifact_path": "published/codefox/1.1.0/artifacts/feature-x-launch"
+  },
+  "published_at": "2026-06-17T05:35:10.920228+00:00"
+}

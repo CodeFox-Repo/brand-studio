@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T05:57:44.641107+00:00",
+  "dry_run": false,
+  "brand_lock_path": "workspace/brand/kobe.lock.yaml",
+  "campaign_path": "workspace/campaigns/kobe-launch.campaign.yaml",
+  "brand_lock": {
+    "version": "1.0.0",
+    "brand": {
+      "id": "kobe",
+      "name": "kobe"
+    },
+    "provider": {
+      "gateway": "openai",
+      "model": "gpt-image-2",
+      "params": {
+        "seed_strategy": "fixed",
+        "seed": 24017,
+        "quality": "medium",
+        "timeout_seconds": 180,
+        "retry_attempts": 3,
+        "output_format": "png"
+      }
+    },
+    "global": {
+      "color": {
+        "terminal-black": {
+          "$value": "#10110F",
+          "$type": "color"
+        },
+        "graphite": {
+          "$value": "#1A1C1A",
+          "$type": "color"
+        },
+        "phosphor-cyan": {
+          "$value": "#4DF5FF",
+          "$type": "color"
+        },
+        "agent-green": {
+          "$value": "#8CFF6A",
+          "$type": "color"
+        },
+        "muted-gray": {
+          "$value": "#A6A6A0",
+          "$type": "color"
+        }
+      },
+      "typography": {
+        "terminal-face": {
+          "$value": "condensed monospaced terminal typography, precise uppercase tracking, sharp readable UI labels",
+          "$type": "fontFamily"
+        }
+      },
+      "style-fragment": {
+        "base-aesthetic": {
+          "$value": "high-tech terminal-native promotional visual, SSH-friendly TUI atmosphere, dark graphite canvas, crisp tmux panes, parallel AI coding agents represented as isolated git worktree lanes, cinematic but restrained, no browser chrome",
+          "$type": "text"
+        },
+        "product-signature": {
+          "$value": "minimal black hero inspired by the reference image, centered monospace type, subtle glowing pane borders, cyan and green circuit-like branch traces, five parallel agent sessions visible without clutter",
+          "$type": "text"
+        }
+      },
+      "negative": {
+        "global-exclude": {
+          "$value": "cartoon mascot, glossy SaaS dashboard, browser window mockup, fake unreadable paragraphs, malformed terminal text, low contrast, cluttered layout, stock-photo people, watermark",
+          "$type": "text"
+        }
+      },
+      "reference": {
+        "tui-reference": {
+          "$value": "workspace/references/kobe-tui-reference.png",
+          "$type": "asset"
+        }
+      }
+    },
+    "alias": {
+      "style": {
+        "launch-hero": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.base-aesthetic}, {global.style-fragment.product-signature}",
+            "palette": [
+              "{global.color.terminal-black}",
+              "{global.color.graphite}",
+              "{global.color.phosphor-cyan}",
+              "{global.color.agent-green}",
+              "{global.color.muted-gray}"
+            ],
+            "typography": "{global.typography.terminal-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": [
+              "{global.reference.tui-reference}"
+            ]
+          }
+        },
+        "social-default": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.base-aesthetic}",
+            "palette": [
+              "{global.color.terminal-black}",
+              "{global.color.phosphor-cyan}",
+              "{global.color.agent-green}"
+            ],
+            "typography": "{global.typography.terminal-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": [
+              "{global.reference.tui-reference}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "campaign": {
+    "name": "kobe-launch",
+    "brief": "kobe 宣发主视觉：SSH-friendly TUI for parallel AI coding agents",
+    "style": "launch-hero",
+    "content": {
+      "headline": "Run parallel coding agents from any terminal.",
+      "subject": "a futuristic dark terminal hero image for kobe, an SSH-friendly TUI orchestrator for Claude Code, Codex, and Copilot agents; show isolated git worktrees as five parallel tmux lanes, a central engine pane, task list, ops pane, shell pane, persistent sessions, and branching agent attempts; keep the mood close to the provided black TUI reference image with minimal monospace text and high-tech cyan green accents"
+    },
+    "deliverables": [
+      {
+        "id": "hero-card",
+        "size": [
+          1200,
+          630
+        ]
+      }
+    ]
+  },
+  "resolved_style": {
+    "name": "launch-hero",
+    "prompt": "high-tech terminal-native promotional visual, SSH-friendly TUI atmosphere, dark graphite canvas, crisp tmux panes, parallel AI coding agents represented as isolated git worktree lanes, cinematic but restrained, no browser chrome, minimal black hero inspired by the reference image, centered monospace type, subtle glowing pane borders, cyan and green circuit-like branch traces, five parallel agent sessions visible without clutter",
+    "palette": [
+      "#10110F",
+      "#1A1C1A",
+      "#4DF5FF",
+      "#8CFF6A",
+      "#A6A6A0"
+    ],
+    "typography": "condensed monospaced terminal typography, precise uppercase tracking, sharp readable UI labels",
+    "negative": "cartoon mascot, glossy SaaS dashboard, browser window mockup, fake unreadable paragraphs, malformed terminal text, low contrast, cluttered layout, stock-photo people, watermark",
+    "references": [
+      "workspace/references/kobe-tui-reference.png"
+    ]
+  },
+  "provider": {
+    "gateway": "openai",
+    "model": "gpt-image-2",
+    "params": {
+      "seed_strategy": "fixed",
+      "seed": 24017,
+      "timeout_seconds": 180,
+      "retry_attempts": 3,
+      "output_format": "png",
+      "quality": "medium"
+    }
+  },
+  "assets": [
+    {
+      "id": "hero-card",
+      "file": "hero-card.png",
+      "size": [
+        1200,
+        630
+      ],
+      "seed": 24017,
+      "prompt": "Brand style: high-tech terminal-native promotional visual, SSH-friendly TUI atmosphere, dark graphite canvas, crisp tmux panes, parallel AI coding agents represented as isolated git worktree lanes, cinematic but restrained, no browser chrome, minimal black hero inspired by the reference image, centered monospace type, subtle glowing pane borders, cyan and green circuit-like branch traces, five parallel agent sessions visible without clutter\nCampaign brief: kobe 宣发主视觉：SSH-friendly TUI for parallel AI coding agents\nSubject: a futuristic dark terminal hero image for kobe, an SSH-friendly TUI orchestrator for Claude Code, Codex, and Copilot agents; show isolated git worktrees as five parallel tmux lanes, a central engine pane, task list, ops pane, shell pane, persistent sessions, and branching agent attempts; keep the mood close to the provided black TUI reference image with minimal monospace text and high-tech cyan green accents\nDeliverable: hero-card, 1200x630px\nHeadline text to render exactly: \"Run parallel coding agents from any terminal.\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #10110F, #1A1C1A, #4DF5FF, #8CFF6A, #A6A6A0\nTypography direction for visible text: condensed monospaced terminal typography, precise uppercase tracking, sharp readable UI labels\nRespect brand reference assets: workspace/references/kobe-tui-reference.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "cartoon mascot, glossy SaaS dashboard, browser window mockup, fake unreadable paragraphs, malformed terminal text, low contrast, cluttered layout, stock-photo people, watermark",
+      "provider_metadata": {
+        "gateway": "openai",
+        "model": "gpt-image-2",
+        "status_code": 200,
+        "openai_size": "1536x1024",
+        "requested_size": [
+          1200,
+          630
+        ],
+        "resized_to_requested_size": true,
+        "response": {
+          "created": 1781675947,
+          "background": "opaque",
+          "data": [
+            {
+              "b64_json": "[redacted image payload]"
+            }
+          ],
+          "output_format": "png",
+          "quality": "medium",
+          "size": "1536x1024",
+          "usage": {
+            "input_tokens": "[redacted]",
+            "input_tokens_details": "[redacted]",
+            "output_tokens": "[redacted]",
+            "output_tokens_details": "[redacted]",
+            "total_tokens": "[redacted]"
+          }
+        }
+      }
+    }
+  ]
+}

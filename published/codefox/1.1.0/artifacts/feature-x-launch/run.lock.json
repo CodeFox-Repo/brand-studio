@@ -1,0 +1,260 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T05:35:10.713218+00:00",
+  "dry_run": true,
+  "brand_lock_path": "workspace/brand/brand.lock.yaml",
+  "campaign_path": "workspace/campaigns/example.campaign.yaml",
+  "brand_lock": {
+    "version": "1.1.0",
+    "brand": {
+      "id": "codefox",
+      "name": "CodeFox"
+    },
+    "provider": {
+      "gateway": "openai",
+      "model": "gpt-image-1.5",
+      "params": {
+        "seed_strategy": "fixed",
+        "seed": 12345,
+        "quality": "medium",
+        "timeout_seconds": 120,
+        "retry_attempts": 3,
+        "output_format": "png"
+      }
+    },
+    "global": {
+      "color": {
+        "brand-primary": {
+          "$value": "#1A1A2E",
+          "$type": "color"
+        },
+        "brand-accent": {
+          "$value": "#E94560",
+          "$type": "color"
+        },
+        "bg-neutral": {
+          "$value": "#F5F5F0",
+          "$type": "color"
+        }
+      },
+      "typography": {
+        "primary-face": {
+          "$value": "clean geometric sans serif, high legibility",
+          "$type": "fontFamily"
+        }
+      },
+      "style-fragment": {
+        "base-aesthetic": {
+          "$value": "premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space",
+          "$type": "text"
+        },
+        "mood-clean": {
+          "$value": "clean minimal composition, precise edges, quiet confidence, no clutter",
+          "$type": "text"
+        }
+      },
+      "negative": {
+        "global-exclude": {
+          "$value": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+          "$type": "text"
+        }
+      },
+      "reference": {
+        "main-visual": {
+          "$value": "workspace/references/main_visual.png",
+          "$type": "asset"
+        }
+      }
+    },
+    "alias": {
+      "style": {
+        "launch-hero": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.base-aesthetic}, {global.style-fragment.mood-clean}",
+            "palette": [
+              "{global.color.brand-primary}",
+              "{global.color.brand-accent}"
+            ],
+            "typography": "{global.typography.primary-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": [
+              "{global.reference.main-visual}"
+            ]
+          }
+        },
+        "social-default": {
+          "$type": "composite",
+          "$value": {
+            "prompt": "{global.style-fragment.base-aesthetic}",
+            "palette": [
+              "{global.color.brand-primary}",
+              "{global.color.bg-neutral}"
+            ],
+            "typography": "{global.typography.primary-face}",
+            "negative": "{global.negative.global-exclude}",
+            "references": []
+          }
+        }
+      }
+    }
+  },
+  "campaign": {
+    "name": "feature-x-launch",
+    "brief": "新功能 X 上线宣发",
+    "style": "launch-hero",
+    "content": {
+      "headline": "Meet Feature X",
+      "subject": "a polished SaaS product launch visual centered on a luminous product interface"
+    },
+    "deliverables": [
+      {
+        "id": "wechat-header",
+        "size": [
+          900,
+          383
+        ]
+      },
+      {
+        "id": "moments-square",
+        "size": [
+          1080,
+          1080
+        ]
+      },
+      {
+        "id": "poster",
+        "size": [
+          1080,
+          1920
+        ]
+      },
+      {
+        "id": "web-banner",
+        "size": [
+          1920,
+          600
+        ]
+      },
+      {
+        "id": "x-card",
+        "size": [
+          1200,
+          630
+        ]
+      }
+    ]
+  },
+  "resolved_style": {
+    "name": "launch-hero",
+    "prompt": "premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter",
+    "palette": [
+      "#1A1A2E",
+      "#E94560"
+    ],
+    "typography": "clean geometric sans serif, high legibility",
+    "negative": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+    "references": [
+      "workspace/references/main_visual.png"
+    ]
+  },
+  "provider": {
+    "gateway": "openai",
+    "model": "gpt-image-1.5",
+    "params": {
+      "seed_strategy": "fixed",
+      "seed": 12345,
+      "timeout_seconds": 120,
+      "retry_attempts": 3,
+      "output_format": "png",
+      "quality": "medium"
+    }
+  },
+  "assets": [
+    {
+      "id": "wechat-header",
+      "file": "wechat-header.svg",
+      "size": [
+        900,
+        383
+      ],
+      "seed": 12345,
+      "prompt": "Brand style: premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter\nCampaign brief: 新功能 X 上线宣发\nSubject: a polished SaaS product launch visual centered on a luminous product interface\nDeliverable: wechat-header, 900x383px\nHeadline text to render exactly: \"Meet Feature X\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #1A1A2E, #E94560\nTypography direction for visible text: clean geometric sans serif, high legibility\nRespect brand reference assets: workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+      "provider_metadata": {
+        "dry_run": true,
+        "gateway": "openai",
+        "model": "gpt-image-1.5",
+        "prompt_sha256": "3771ddef0d14afeab75f2645214f6af87d706ac15fd194e3f883fb4bb4424f27"
+      }
+    },
+    {
+      "id": "moments-square",
+      "file": "moments-square.svg",
+      "size": [
+        1080,
+        1080
+      ],
+      "seed": 12345,
+      "prompt": "Brand style: premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter\nCampaign brief: 新功能 X 上线宣发\nSubject: a polished SaaS product launch visual centered on a luminous product interface\nDeliverable: moments-square, 1080x1080px\nHeadline text to render exactly: \"Meet Feature X\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #1A1A2E, #E94560\nTypography direction for visible text: clean geometric sans serif, high legibility\nRespect brand reference assets: workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+      "provider_metadata": {
+        "dry_run": true,
+        "gateway": "openai",
+        "model": "gpt-image-1.5",
+        "prompt_sha256": "e23cdf30b80a00fe521cb2b91df077026f613aa0330f748fc1aea5d3ed71ed66"
+      }
+    },
+    {
+      "id": "poster",
+      "file": "poster.svg",
+      "size": [
+        1080,
+        1920
+      ],
+      "seed": 12345,
+      "prompt": "Brand style: premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter\nCampaign brief: 新功能 X 上线宣发\nSubject: a polished SaaS product launch visual centered on a luminous product interface\nDeliverable: poster, 1080x1920px\nHeadline text to render exactly: \"Meet Feature X\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #1A1A2E, #E94560\nTypography direction for visible text: clean geometric sans serif, high legibility\nRespect brand reference assets: workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+      "provider_metadata": {
+        "dry_run": true,
+        "gateway": "openai",
+        "model": "gpt-image-1.5",
+        "prompt_sha256": "08ef10893b9450b9687b7b79f1ea751bbde2009b88924b7ad553f2cb02f1502f"
+      }
+    },
+    {
+      "id": "web-banner",
+      "file": "web-banner.svg",
+      "size": [
+        1920,
+        600
+      ],
+      "seed": 12345,
+      "prompt": "Brand style: premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter\nCampaign brief: 新功能 X 上线宣发\nSubject: a polished SaaS product launch visual centered on a luminous product interface\nDeliverable: web-banner, 1920x600px\nHeadline text to render exactly: \"Meet Feature X\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #1A1A2E, #E94560\nTypography direction for visible text: clean geometric sans serif, high legibility\nRespect brand reference assets: workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+      "provider_metadata": {
+        "dry_run": true,
+        "gateway": "openai",
+        "model": "gpt-image-1.5",
+        "prompt_sha256": "b6d9d19a90a3dddf6a8132e0dbdb6aae3e6b6862b2aafe966429f4b51f9f1016"
+      }
+    },
+    {
+      "id": "x-card",
+      "file": "x-card.svg",
+      "size": [
+        1200,
+        630
+      ],
+      "seed": 12345,
+      "prompt": "Brand style: premium editorial product visual, crisp geometry, controlled contrast, refined lighting, balanced negative space, clean minimal composition, precise edges, quiet confidence, no clutter\nCampaign brief: 新功能 X 上线宣发\nSubject: a polished SaaS product launch visual centered on a luminous product interface\nDeliverable: x-card, 1200x630px\nHeadline text to render exactly: \"Meet Feature X\"\nUse only this brand palette unless natural lighting requires subtle neutrals: #1A1A2E, #E94560\nTypography direction for visible text: clean geometric sans serif, high legibility\nRespect brand reference assets: workspace/references/main_visual.png\nKeep the locked brand style constant; vary only the campaign content and composition for this deliverable.",
+      "negative_prompt": "low quality, blurry, distorted text, malformed logo, watermark, crowded layout, off-brand colors",
+      "provider_metadata": {
+        "dry_run": true,
+        "gateway": "openai",
+        "model": "gpt-image-1.5",
+        "prompt_sha256": "2246c506d8aa09652c6a4ffa223a93d4f430df286f4b81bc957d1bafa37ea236"
+      }
+    }
+  ]
+}
