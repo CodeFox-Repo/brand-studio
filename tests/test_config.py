@@ -34,6 +34,39 @@ def test_example_config_resolves_alias_tokens() -> None:
     assert loaded.campaign.content.subject
 
 
+def test_proposal_brand_lock_loads_product_sidecars(tmp_path: Path) -> None:
+    product_dir = tmp_path / "workspace" / "products" / "codefox" / "codefox"
+    proposal_dir = product_dir / "proposals"
+    proposal_dir.mkdir(parents=True)
+
+    proposal_path = proposal_dir / "proposal.lock.yaml"
+    proposal_path.write_text(
+        (ROOT / "workspace/products/codefox/codefox/brand.lock.yaml").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+    for name in ("brand.meta.yaml", "elements.yaml", "accepted.yaml"):
+        (product_dir / name).write_text(
+            (ROOT / "workspace/products/codefox/codefox" / name).read_text(
+                encoding="utf-8"
+            ),
+            encoding="utf-8",
+        )
+
+    loaded = load_harness_config(
+        campaign_path=ROOT / "workspace/products/codefox/codefox/campaigns/example.campaign.yaml",
+        brand_path=proposal_path,
+    )
+
+    assert loaded.sidecars.brand_meta is not None
+    assert loaded.sidecars.brand_meta.path == product_dir / "brand.meta.yaml"
+    assert loaded.sidecars.brand_elements is not None
+    assert loaded.sidecars.brand_elements.path == product_dir / "elements.yaml"
+    assert loaded.sidecars.brand_accepted is not None
+    assert loaded.sidecars.brand_accepted.path == product_dir / "accepted.yaml"
+
+
 def test_unknown_campaign_style_fails() -> None:
     loaded = load_harness_config(
         campaign_path=ROOT / "workspace/products/codefox/codefox/campaigns/example.campaign.yaml",

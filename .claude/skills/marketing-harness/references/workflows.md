@@ -2,6 +2,10 @@
 
 Run commands from the repository root.
 
+Use the `harness_entrypoint` reported by `scripts/check_harness.py` as the
+command prefix. The examples below use `uv run harness`; if the check reports
+`.venv/bin/harness`, replace `uv run harness` with that path.
+
 ## Setup
 
 ```bash
@@ -61,10 +65,29 @@ outputs/feature-x-launch/
 └── run.lock.json
 ```
 
-This is only the local render buffer. For any output the user expects projects
-to consume, immediately run the repo publish step below.
+This is only the local render buffer. Do not publish it yet unless the user
+explicitly pre-approved auto-publish after render. Inspect the assets and ask
+for human acceptance before any `--publish` command.
+
+## Live Render With GPT Image Skill CLI
+
+Use this when `brand.lock.yaml` sets `provider.gateway` to `skill-cli` or
+`gpt-image-skill`. The provider calls the local `gpt-image` CLI or the installed
+Codex skill launcher, then resizes the output to each deliverable's exact size.
+
+```bash
+command -v gpt-image || true
+test -f ~/.codex/skills/gpt-image/scripts/generate.py && echo "gpt-image skill installed"
+
+uv run harness render workspace/products/codefox/codefox/campaigns/example.campaign.yaml \
+  --brand workspace/products/codefox/codefox/brand.lock.yaml
+```
 
 ## Publish To Repo
+
+Only enter this step after the user accepts the rendered assets, or when the
+user explicitly asked to auto-publish after render. API-cost approval is not
+asset approval.
 
 Dry-run:
 

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from harness.providers.base import ImageProvider, ProviderError
 from harness.providers.gateway import GatewayImageProvider
 from harness.providers.openai import OpenAIImageProvider
+from harness.providers.skill_cli import SkillCliImageProvider
 
 if TYPE_CHECKING:
     from harness.config import ProviderConfig
@@ -20,7 +21,9 @@ class UnsupportedProviderError(ProviderError):
 _PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "generic": lambda _config: GatewayImageProvider(),
     "gateway": lambda _config: GatewayImageProvider(),
+    "gpt-image-skill": lambda _config: SkillCliImageProvider(),
     "openai": lambda _config: OpenAIImageProvider(),
+    "skill-cli": lambda _config: SkillCliImageProvider(),
 }
 
 

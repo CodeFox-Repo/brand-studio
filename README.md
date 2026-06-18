@@ -53,6 +53,8 @@ uv run harness validate workspace/products/codefox/codefox/campaigns/example.cam
 uv run harness render workspace/products/codefox/codefox/campaigns/example.campaign.yaml --dry-run
 ```
 
+标准入口是 `uv run harness`。如果某台机器暂时没有 `uv`，但仓库已经存在 `.venv/bin/harness`，可以临时用 `.venv/bin/harness ...` 跑同样的命令；长期仍建议把 `uv` 安装到 PATH。
+
 `--dry-run` 不调用生图 API，会写 SVG 占位图、`run.lock.json` 和 `manifest.json`。当前示例 brand lock 默认使用 OpenAI Images provider；真生成时在 `.env` 里配置：
 
 ```bash
@@ -158,10 +160,29 @@ provider:
 Provider 选择由 `src/harness/providers/factory.py` 负责。内置 gateway：
 
 - `openai`: OpenAI Images API，读取 `OPENAI_API_KEY`。
+- `skill-cli`: 本地 GPT Image skill/CLI provider，优先使用 `provider.params.command`，其次 `HARNESS_SKILL_CLI_COMMAND`，再找 PATH 上的 `gpt-image`，最后找 `~/.codex/skills/gpt-image/scripts/generate.py`。
+- `gpt-image-skill`: `skill-cli` 的别名，适合明确标注走 `wuyoscar/GPT-Image2-Skill`。
 - `generic`: 通用 HTTP image gateway。
 - `gateway`: `generic` 的别名。
 
 OpenAI 图片接口支持固定生成尺寸。harness 会按 deliverable 的宽高比选择最近的 OpenAI 尺寸生成，再本地裁切/缩放到 campaign 要求的精确尺寸，确保 `manifest.json` 里的 size 与产物一致。
+
+使用本地 `gpt-image` skill/CLI 时，先安装 skill 和 CLI，然后只改锁定层：
+
+```yaml
+provider:
+  gateway: "skill-cli"
+  model: "gpt-image-2"
+  params:
+    seed_strategy: "fixed"
+    seed: 12345
+    quality: "high"
+    output_format: "png"
+    # optional; otherwise auto-resolves gpt-image / installed skill launcher
+    command: "gpt-image"
+```
+
+`skill-cli` 会把 harness 组合出的最终 prompt 传给 CLI，并把 CLI 生成图本地裁切/缩放到 deliverable 的精确尺寸。若 alias style 有 reference assets，默认会以 `-i` 传给 CLI；缺失引用会报错，可用 `strict_references: false` 临时关闭。
 
 新增 engine 时，实现 `ImageProvider`，再注册 gateway：
 
@@ -202,7 +223,7 @@ hero = next(asset for asset in manifest["assets"] if asset["id"] == "web-banner"
 print(hero["url"] or hero["path"])
 ```
 
-`outputs/` 不提交、不作为项目方消费入口。完整生成流程必须在 render 成功后继续 `harness publish <campaign> --channel repo --publish`，把快照写入 `published/products/<portfolio-id>/<brand-id>/<brand-version>/`。
+`outputs/` 不提交、不作为项目方消费入口。完整生成流程是：render 成功后先人工验收图片、文字质量、尺寸和 brief 匹配度；验收通过后再执行 `harness publish <campaign> --channel repo --publish`，把快照写入 `published/products/<portfolio-id>/<brand-id>/<brand-version>/`。API 成本确认不等于产物验收通过。
 
 项目方应 pin `brand_lock_version` 或 release artifact 版本，不应直接运行生成。
 
@@ -272,6 +293,8 @@ uv run harness publish feature-x-launch --channel cdn --publish
 uv run harness publish feature-x-launch --channel repo --publish
 ```
 
+live render 之后应先看 `outputs/<campaign>/` 里的图片、`manifest.json` 和 `run.lock.json`。只有用户或 reviewer 明确接受这次产物后，才把 `--publish` 当作最终发布动作。
+
 CDN 通道使用 S3-compatible object storage，凭证只从环境变量读取，不写入配置或 manifest。release 通道会生成 `releases/<campaign>-brand-<version>.zip`，包含成品、`manifest.json` 和 `run.lock.json`。
 
 repo 通道会把一次发布冻结成带 portfolio/product namespace 的仓库快照。`version` 是某个 product brand 的 `brand.lock` 版本，不是全局版本，所以路径必须包含 `portfolio.id` 和 `brand.id`：
@@ -335,6 +358,7 @@ uv run harness regression --dry-run
 ```text
 OPENAI_API_KEY
 OPENAI_BASE_URL
+HARNESS_SKILL_CLI_COMMAND   # optional local skill-cli command override
 HARNESS_GATEWAY_API_KEY     # only needed for generic gateway
 HARNESS_GATEWAY_BASE_URL    # only needed for generic gateway
 HARNESS_GATEWAY_IMAGE_PATH  # only needed for generic gateway
@@ -376,7 +400,7 @@ Codex 从 `~/.codex/skills/` 发现本地 skill。推荐用软链指向仓库内
 
 ```bash
 mkdir -p ~/.codex/skills
-ln -s /Users/narwhal/proj/marketing-harness/.claude/skills/marketing-harness \
+ln -s "$PWD/.claude/skills/marketing-harness" \
   ~/.codex/skills/marketing-harness
 ```
 

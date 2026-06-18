@@ -289,7 +289,7 @@ def load_harness_config(
 
 
 def load_sidecars(brand: BrandLock, brand_path: Path) -> LoadedSidecars:
-    product_dir = brand_path.parent
+    product_dir = product_dir_for_brand_path(brand_path)
     portfolio_dir = portfolio_dir_for_brand(brand, brand_path)
     return LoadedSidecars(
         portfolio_meta=load_optional_sidecar(
@@ -329,6 +329,13 @@ def load_sidecars(brand: BrandLock, brand_path: Path) -> LoadedSidecars:
             AcceptedCorpus,
         ),
     )
+
+
+def product_dir_for_brand_path(brand_path: Path) -> Path:
+    parent = brand_path.parent
+    if parent.name == "proposals":
+        return parent.parent
+    return parent
 
 
 def portfolio_dir_for_brand(brand: BrandLock, brand_path: Path) -> Path | None:

@@ -16,6 +16,7 @@ from harness.providers.factory import (
 )
 from harness.providers.gateway import GatewayImageProvider
 from harness.providers.openai import OpenAIImageProvider
+from harness.providers.skill_cli import SkillCliImageProvider
 
 __all__ = [
     "AuthenticationError",
@@ -28,6 +29,7 @@ __all__ = [
     "ProviderError",
     "ProviderTimeoutError",
     "RateLimitError",
+    "SkillCliImageProvider",
     "UnsupportedProviderError",
     "available_provider_gateways",
     "create_provider",

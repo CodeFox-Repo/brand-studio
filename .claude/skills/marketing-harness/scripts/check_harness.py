@@ -23,10 +23,22 @@ REQUIRED_FILES = [
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     missing = [path for path in REQUIRED_FILES if not (root / path).exists()]
+    uv_path = shutil.which("uv")
+    venv_harness = root / ".venv" / "bin" / "harness"
+    harness_entrypoint = (
+        "uv run harness"
+        if uv_path
+        else str(venv_harness)
+        if venv_harness.exists()
+        else None
+    )
     status = {
         "root": str(root),
         "missing": missing,
-        "uv_available": shutil.which("uv") is not None,
+        "uv_available": uv_path is not None,
+        "uv_path": uv_path,
+        "venv_harness_available": venv_harness.exists(),
+        "harness_entrypoint": harness_entrypoint,
         "env_exists": (root / ".env").exists(),
         "outputs_exists": (root / "outputs").exists(),
         "published_exists": (root / "published").exists(),
