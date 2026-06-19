@@ -21,7 +21,7 @@ brand memory -> brand.lock.yaml -> campaign.yaml -> render -> human review -> pu
 
 skill 会帮助 agent 完成这些事：
 
-- 在业务 repo 里初始化 `workspace/` 目录结构。
+- 读取小型 YAML/JSON metadata，明确业务 repo 的路径和策略。
 - 构建或更新品牌 metadata 和 design-token 风格锁。
 - 校验 `brand.lock.yaml` 和 campaign YAML。
 - 先跑不花 API 钱的 dry-run。
@@ -71,29 +71,34 @@ python3 "$SKILL_ROOT/scripts/harness.py" ...
 launcher 会让所有相对路径仍然落在当前业务 repo，并按这个顺序找 runtime：
 
 1. `HARNESS_PROJECT_DIR` 指向的本地 checkout。
-2. 当前 skill 上级目录里的开发 checkout。
+2. metadata 里的 `runtime.projectDir`。
 3. PATH 上已有的 `harness` 命令。
-4. 远端 fallback：`uvx --from git+https://github.com/CodeFox-Repo/marketing-harness harness`。
+4. 只有显式设置 `HARNESS_ALLOW_REMOTE_RUNTIME=1` 或
+   `policy.allowRemoteRuntimeFallback: true` 时，才允许远端 `uvx` fallback。
 
 所以 skill 包可以保持轻量，同时在新业务 repo 里仍然能跑。
 
 ## 业务 Repo 目录
 
-业务 repo 拥有输入和产物：
+业务 repo 拥有输入和产物。路径应该来自 metadata，而不是写死根目录结构。常见形态可以是：
 
 ```text
-workspace/
-  portfolios/<portfolio-id>/
-  products/<portfolio-id>/<brand-id>/
-outputs/
-published/
+packages/branding/
+  marketing/
+    brand.lock.yaml
+    campaigns/
+    references/
+    proposals/
+  public/marketing/
+    <approved assets and manifests>
+  .harness/out/
 ```
 
-- `workspace/`: 可编辑输入，包括品牌 metadata、风格锁、campaign YAML、proposal、references 和 accepted work 记录。
-- `outputs/`: 本地 render buffer。
-- `published/`: 人工验收后的资产仓路径或 submodule 目标。
+- `project.marketingRoot`: 可编辑输入，包括品牌 metadata、风格锁、campaign YAML、proposal、references 和 accepted work 记录。
+- `artifacts.scratch`: 本地 render buffer。
+- `artifacts.approved`: 人工验收后的资产目录、资产仓路径或 submodule 目标。
 
-通常 `outputs/` 和 `published/` 都不直接作为主 repo 代码提交；如果要长期保存 `published/`，更推荐把它作为单独 asset repo 或 submodule 管理。
+raw scratch outputs 默认没有长期价值；只有人工验收后的最终资产才应该 promote 到 approved 路径。
 
 ## Brand Lock Contract
 
@@ -131,10 +136,11 @@ skills/marketing-harness/
 │   ├── workflows.md
 │   └── design-producer-protocol.md
 ├── assets/
-└── examples/
 ```
 
 `SKILL.md` 是 agent 加载后的操作手册；这份 README 是给人看的总览。详细 schema 和命令流程在 `references/` 里，agent 会按任务需要加载，避免每次把所有细节塞进上下文。
+
+开发 checkout 可以带 `examples/`，但默认打包出来的 skill artifact 不包含 examples。
 
 ## Runtime 要求
 
@@ -173,4 +179,6 @@ uv run harness validate skills/marketing-harness/examples/codefox/workspace/prod
 python3 scripts/package_skill.py
 ```
 
-zip 只包含 `skills/marketing-harness/` 内容。它不会打包根目录的 `src/`、`tests/`、`outputs/` 或 `published/`；真实 runtime 由本地 checkout、已安装 CLI 或 launcher 的远端 `uvx` fallback 提供。
+zip 只包含 `skills/marketing-harness/` 内容。它不会打包根目录的 `src/`、`tests/`、`examples/`、`outputs/` 或 `published/`；真实 runtime 由本地 checkout 或已安装 CLI 提供。远端 runtime fallback 只能显式开启。只有维护/debug 包才使用 `--include-examples`。
+
+打包脚本会强制 skill payload 形态：顶层允许 `scripts/`、`references/`、`assets/` 和 `agents/`；如果 skill payload 顶层出现 `src/` 或 `tests/`，打包会失败。

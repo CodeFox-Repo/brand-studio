@@ -17,11 +17,21 @@ EXCLUDE_TOP_LEVEL = {
     ".env",
     ".uv-venv",
     ".venv",
+    "examples",
     "outputs",
     "published",
     "releases",
     "tests",
     "workspace",
+}
+ALLOWED_TOP_LEVEL = {
+    ".env.example",
+    "SKILL.md",
+    "agents",
+    "assets",
+    "examples",
+    "references",
+    "scripts",
 }
 
 
@@ -29,15 +39,21 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     skill_dir = repo_root / "skills" / "marketing-harness"
     default_output = repo_root.parent / "marketing-harness.zip"
-    output = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else default_output
+    include_examples = "--include-examples" in sys.argv[1:]
+    positional = [arg for arg in sys.argv[1:] if arg != "--include-examples"]
+    output = Path(positional[0]).resolve() if positional else default_output
     output.parent.mkdir(parents=True, exist_ok=True)
     if not (skill_dir / "SKILL.md").is_file():
         raise SystemExit(f"Missing skill payload: {skill_dir / 'SKILL.md'}")
+    validate_skill_payload(skill_dir)
 
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(skill_dir.rglob("*")):
             relative = path.relative_to(skill_dir)
-            if should_exclude(relative) or path.resolve() == output:
+            if (
+                should_exclude(relative, include_examples=include_examples)
+                or path.resolve() == output
+            ):
                 continue
             if path.is_file():
                 archive.write(path, arcname=relative)
@@ -46,8 +62,26 @@ def main() -> int:
     return 0
 
 
-def should_exclude(relative: Path) -> bool:
-    if relative.parts and relative.parts[0] in EXCLUDE_TOP_LEVEL:
+def validate_skill_payload(skill_dir: Path) -> None:
+    invalid = sorted(
+        path.name
+        for path in skill_dir.iterdir()
+        if path.name not in ALLOWED_TOP_LEVEL
+        and path.name not in EXCLUDE_ANYWHERE
+        and path.name not in EXCLUDE_TOP_LEVEL
+    )
+    if invalid:
+        allowed = ", ".join(sorted(ALLOWED_TOP_LEVEL))
+        found = ", ".join(invalid)
+        raise SystemExit(
+            "Invalid skill payload top-level entries: "
+            f"{found}. Allowed entries are: {allowed}."
+        )
+
+
+def should_exclude(relative: Path, *, include_examples: bool = False) -> bool:
+    top_level_excludes = EXCLUDE_TOP_LEVEL - {"examples"} if include_examples else EXCLUDE_TOP_LEVEL
+    if relative.parts and relative.parts[0] in top_level_excludes:
         return True
     return any(part in EXCLUDE_ANYWHERE for part in relative.parts)
 

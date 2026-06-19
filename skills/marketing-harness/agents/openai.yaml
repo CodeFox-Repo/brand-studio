@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $marketing-harness to operate the marketing image-generation harness."
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

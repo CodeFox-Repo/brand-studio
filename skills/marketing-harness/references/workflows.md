@@ -1,32 +1,34 @@
 # Marketing Harness Workflows
 
-Run commands from the product repository root. The product repo owns
-`workspace/`, `outputs/`, and `published/`; the installed skill owns workflow
-instructions and the harness launcher.
+Run commands from the product repository root. The product repo owns the
+marketing paths declared in metadata; the installed skill owns workflow
+instructions and the harness launcher. Do not assume a root-level `workspace/`,
+`outputs/`, or `published/` tree.
 
-Set the launcher path once:
+Set the launcher and metadata paths once:
 
 ```bash
 HARNESS_SCRIPT="$SKILL_ROOT/scripts/harness.py"
+HARNESS_METADATA="packages/branding/marketing.harness.yaml"
 ```
 
-The launcher prefers `HARNESS_PROJECT_DIR`, then a local development checkout,
-then `harness` on PATH, then `uvx --from git+https://github.com/CodeFox-Repo/marketing-harness`.
+The launcher prefers `HARNESS_PROJECT_DIR`, then `runtime.projectDir` from
+metadata, then `harness` on PATH. Remote `uvx` fallback is disabled unless
+`HARNESS_ALLOW_REMOTE_RUNTIME=1` or `policy.allowRemoteRuntimeFallback: true`.
 
 ## Setup
 
 Consumer repo:
 
 ```bash
-sh "$SKILL_ROOT/scripts/bootstrap_project.sh" .
-cp "$SKILL_ROOT/.env.example" .env
+sh "$SKILL_ROOT/scripts/bootstrap_project.sh" --metadata "$HARNESS_METADATA" .
+sh "$SKILL_ROOT/scripts/bootstrap_project.sh" --metadata "$HARNESS_METADATA" --write .
 ```
 
 Harness development repo:
 
 ```bash
 uv sync
-cp skills/marketing-harness/.env.example .env
 ```
 
 Edit `.env` locally for the GPT Image skill/CLI:
@@ -34,7 +36,7 @@ Edit `.env` locally for the GPT Image skill/CLI:
 ```env
 OPENAI_API_KEY=...
 OPENAI_BASE_URL=https://api.openai.com/v1
-HARNESS_REPO_PUBLISH_DIR=published  # usually an asset git repo or submodule
+HARNESS_REPO_PUBLISH_DIR=packages/branding/public/marketing
 ```
 
 `.env` is ignored by git. Never paste key values into committed files.
@@ -42,22 +44,20 @@ HARNESS_REPO_PUBLISH_DIR=published  # usually an asset git repo or submodule
 ## Validate Existing Campaign
 
 ```bash
-python3 "$HARNESS_SCRIPT" validate workspace/products/codefox/codefox/campaigns/example.campaign.yaml \
-  --brand workspace/products/codefox/codefox/brand.lock.yaml
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" validate
 ```
 
 ## Dry-Run Render
 
 ```bash
-python3 "$HARNESS_SCRIPT" render workspace/products/codefox/codefox/campaigns/example.campaign.yaml \
-  --brand workspace/products/codefox/codefox/brand.lock.yaml \
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" render \
   --dry-run
 ```
 
 Expected output:
 
 ```text
-outputs/feature-x-launch/
+<metadata artifacts.scratch>/<campaign>/
 ├── *.svg
 ├── manifest.json
 └── run.lock.json
@@ -75,14 +75,13 @@ resizes the output to each deliverable's exact size.
 command -v gpt-image || true
 test -f ~/.codex/skills/gpt-image/scripts/generate.py && echo "gpt-image skill installed"
 
-python3 "$HARNESS_SCRIPT" render workspace/products/codefox/codefox/campaigns/example.campaign.yaml \
-  --brand workspace/products/codefox/codefox/brand.lock.yaml
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" render
 ```
 
 Expected output:
 
 ```text
-outputs/feature-x-launch/
+<metadata artifacts.scratch>/<campaign>/
 ├── *.png
 ├── manifest.json
 └── run.lock.json
@@ -101,24 +100,24 @@ asset approval.
 Dry-run:
 
 ```bash
-python3 "$HARNESS_SCRIPT" publish feature-x-launch --channel repo --repo-dir published
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" publish
 ```
 
 Write versioned artifacts:
 
 ```bash
-python3 "$HARNESS_SCRIPT" publish feature-x-launch --channel repo --repo-dir published --publish
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" publish --publish
 ```
 
 Expected output:
 
 ```text
-published/portfolios/<portfolio-id>/<portfolio-version>/
+<metadata artifacts.approved>/portfolios/<portfolio-id>/<portfolio-version>/
 ├── portfolio.meta.yaml
 ├── elements.yaml
 └── accepted.yaml
 
-published/products/<portfolio-id>/<brand-id>/<brand-lock-version>/
+<metadata artifacts.approved>/products/<portfolio-id>/<brand-id>/<brand-lock-version>/
 ├── portfolio/
 ├── metadata/
 ├── brand/brand.lock.yaml
@@ -130,10 +129,10 @@ published/products/<portfolio-id>/<brand-id>/<brand-lock-version>/
     └── run.lock.json
 ```
 
-`published/` is normally a separate asset repository or git submodule inside the
-product repo. Portfolio snapshots are stored there too. The harness does not run
-`git add`, `commit`, or `push`; commit the asset repo/submodule after reviewing
-the snapshot.
+The approved asset directory may be a public package directory, a separate
+asset repository, or a git submodule inside the product repo. Portfolio
+snapshots are stored there too. The harness does not run `git add`, `commit`,
+or `push`; commit the asset repo/submodule after reviewing the snapshot.
 
 ## Produce Style Proposal
 
@@ -148,25 +147,24 @@ Design skill routing is intentionally fuzzy:
 
 ```bash
 python3 "$HARNESS_SCRIPT" style propose \
-  --base workspace/products/codefox/codefox/brand.lock.yaml \
-  --brief workspace/products/codefox/codefox/brief.md \
-  --source workspace/products/codefox/codefox/references/ \
-  --out workspace/products/codefox/codefox/proposals/<brand-name>.lock.yaml \
+  --metadata "$HARNESS_METADATA" \
+  --out packages/branding/marketing/proposals/<brand-name>.lock.yaml \
   --version <next-version>
 ```
 
 Then validate:
 
 ```bash
-python3 "$HARNESS_SCRIPT" validate workspace/products/codefox/codefox/campaigns/example.campaign.yaml \
-  --brand workspace/products/codefox/codefox/proposals/<brand-name>.lock.yaml
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" validate \
+  --brand packages/branding/marketing/proposals/<brand-name>.lock.yaml
 ```
 
 Run regression before promotion:
 
 ```bash
 python3 "$HARNESS_SCRIPT" regression \
-  --brand workspace/products/codefox/codefox/proposals/<brand-name>.lock.yaml \
+  --metadata "$HARNESS_METADATA" \
+  --brand packages/branding/marketing/proposals/<brand-name>.lock.yaml \
   --dry-run
 ```
 
@@ -174,8 +172,8 @@ Promote only after user review:
 
 ```bash
 python3 "$HARNESS_SCRIPT" style promote \
-  workspace/products/codefox/codefox/proposals/<brand-name>.lock.yaml \
-  --to workspace/products/codefox/<brand-name>/brand.lock.yaml
+  packages/branding/marketing/proposals/<brand-name>.lock.yaml \
+  --metadata "$HARNESS_METADATA"
 ```
 
 ## External Design Producer
@@ -184,12 +182,10 @@ Use `--producer command` when an external design skill or script will generate t
 
 ```bash
 python3 "$HARNESS_SCRIPT" style propose \
+  --metadata "$HARNESS_METADATA" \
   --producer command \
   --producer-command "./scripts/design-skill-producer" \
-  --base workspace/products/codefox/codefox/brand.lock.yaml \
-  --brief workspace/products/codefox/codefox/brief.md \
-  --source workspace/products/codefox/codefox/references/ \
-  --out workspace/products/codefox/codefox/proposals/<brand-name>.lock.yaml \
+  --out packages/branding/marketing/proposals/<brand-name>.lock.yaml \
   --version <next-version>
 ```
 
@@ -200,7 +196,7 @@ The command contract is documented in `references/design-producer-protocol.md`.
 Regression does not auto-score image quality.
 
 ```bash
-python3 "$HARNESS_SCRIPT" regression --brand workspace/products/codefox/codefox/brand.lock.yaml
+python3 "$HARNESS_SCRIPT" --metadata "$HARNESS_METADATA" regression
 ```
 
 Fill in the generated `scores.csv` manually. If quality drops, do not promote or publish the style change.

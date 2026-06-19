@@ -28,7 +28,7 @@ class RenderResult:
 
 def render_campaign(
     campaign_path: Path,
-    brand_path: Path = Path("workspace/products/codefox/codefox/brand.lock.yaml"),
+    brand_path: Path,
     outputs_dir: Path = Path("outputs"),
     dry_run: bool = False,
     provider: ImageProvider | None = None,

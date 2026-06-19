@@ -27,7 +27,7 @@ brand memory -> brand.lock.yaml -> campaign.yaml -> render -> human review -> pu
 
 The skill helps an agent:
 
-- bootstrap the expected `workspace/` folders in a product repo.
+- read a small YAML/JSON metadata file that declares product paths and policy.
 - build or update brand metadata and design-token style locks.
 - validate `brand.lock.yaml` and campaign files.
 - run dry-run renders without spending API credits.
@@ -79,32 +79,38 @@ The launcher keeps paths rooted in the current product repo and resolves the
 runtime in this order:
 
 1. `HARNESS_PROJECT_DIR`, if you point it at a local checkout.
-2. An ancestor checkout of this repo, useful while developing the skill.
+2. `runtime.projectDir` from metadata.
 3. A `harness` executable already on `PATH`.
-4. Remote fallback with `uvx --from git+https://github.com/CodeFox-Repo/marketing-harness harness`.
+4. Remote fallback only when `HARNESS_ALLOW_REMOTE_RUNTIME=1` or
+   `policy.allowRemoteRuntimeFallback: true`.
 
 That means the skill package can stay small while still working in fresh repos.
 
 ## Product Repo Shape
 
-The product repo owns the work and outputs:
+The product repo owns the work and outputs. Paths should come from metadata,
+not a hard-coded root layout. One common shape is:
 
 ```text
-workspace/
-  portfolios/<portfolio-id>/
-  products/<portfolio-id>/<brand-id>/
-outputs/
-published/
+packages/branding/
+  marketing/
+    brand.lock.yaml
+    campaigns/
+    references/
+    proposals/
+  public/marketing/
+    <approved assets and manifests>
+  .harness/out/
 ```
 
-- `workspace/` is editable source input: brand metadata, style locks,
-  campaign YAML, proposals, references, and accepted-work notes.
-- `outputs/` is the local render buffer.
-- `published/` is the reviewed asset repo path or submodule target.
+- `project.marketingRoot` is editable source input: brand metadata, style
+  locks, campaign YAML, proposals, references, and accepted-work notes.
+- `artifacts.scratch` is the local render buffer.
+- `artifacts.approved` is the reviewed asset path, asset repo, or submodule
+  target.
 
-`outputs/` and `published/` are normally ignored by the product repo unless
-`published/` is intentionally managed as a separate asset repository or
-submodule.
+Raw scratch outputs are not valuable by default. Promote only human-approved
+final assets into the approved path.
 
 ## Brand Lock Contract
 
@@ -152,12 +158,14 @@ skills/marketing-harness/
 │   ├── workflows.md
 │   └── design-producer-protocol.md
 ├── assets/
-└── examples/
 ```
 
 `SKILL.md` is the agent-facing operating guide. This README is the human-facing
 overview. Detailed schemas and command flows live in `references/` so the skill
 can load only what a task needs.
+
+The development checkout may also contain `examples/`, but examples are not
+included in the default packaged skill artifact.
 
 ## Runtime Requirements
 
@@ -199,5 +207,10 @@ python3 scripts/package_skill.py
 ```
 
 The zip includes `skills/marketing-harness/` contents only. It does not bundle
-root `src/`, `tests/`, `outputs/`, or `published/`; runtime comes from a local
-checkout, installed CLI, or the launcher's remote `uvx` fallback.
+root `src/`, `tests/`, `examples/`, `outputs/`, or `published/`; runtime comes
+from a local checkout or installed CLI. Remote runtime fallback is opt-in only.
+Use `--include-examples` only for maintainer/debug packages.
+
+Packaging enforces the skill payload shape: top-level `scripts/`, `references/`,
+`assets/`, and `agents/` are allowed; top-level `src/` or `tests/` inside the
+skill payload are rejected.

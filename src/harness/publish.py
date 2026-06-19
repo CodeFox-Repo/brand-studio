@@ -30,7 +30,7 @@ class PublishResult:
 
 def publish_campaign(
     campaign_name: str,
-    channel: PublishChannel = "cdn",
+    channel: PublishChannel = "repo",
     outputs_dir: Path = Path("outputs"),
     publish: bool = False,
     repo_dir: Path | None = None,

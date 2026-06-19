@@ -1,0 +1,23 @@
+project:
+  id: my-product
+  root: .
+  marketingRoot: packages/branding/marketing
+
+brand:
+  lock: packages/branding/marketing/brand.lock.yaml
+  campaigns: packages/branding/marketing/campaigns
+  references: packages/branding/marketing/references
+
+campaign:
+  name: launch
+  path: packages/branding/marketing/campaigns/launch.campaign.yaml
+
+artifacts:
+  scratch: packages/branding/.harness/out
+  approved: packages/branding/public/marketing
+
+policy:
+  requireHumanApprovalBeforeRender: true
+  requireHumanApprovalBeforePublish: true
+  allowRemoteRuntimeFallback: false
+  allowRootWorkspaceBootstrap: false

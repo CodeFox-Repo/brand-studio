@@ -50,7 +50,7 @@ def load_regression_prompts(path: Path) -> tuple[RegressionPromptSet, dict[str, 
 
 
 def run_regression(
-    brand_path: Path = Path("workspace/products/codefox/codefox/brand.lock.yaml"),
+    brand_path: Path,
     prompts_path: Path = Path("tests/regression/prompts.yaml"),
     outputs_dir: Path = Path("outputs"),
     dry_run: bool = False,

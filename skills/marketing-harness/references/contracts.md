@@ -41,7 +41,8 @@ Token rules:
 
 ## Metadata, Elements, And Accepted Corpus
 
-New product workspaces use explicit sidecars:
+Product repos may keep optional sidecars next to the metadata-declared
+`brand.lock.yaml` and portfolio directory. A legacy CodeFox example shape is:
 
 ```text
 workspace/portfolios/<portfolio-id>/portfolio.meta.yaml
@@ -76,7 +77,7 @@ Campaigns must not include style prompt fragments, palette, negative prompts, re
 
 ## Run Lock
 
-`outputs/<campaign>/run.lock.json` stores reproducibility metadata:
+`<metadata artifacts.scratch>/<campaign>/run.lock.json` stores reproducibility metadata:
 
 - full brand lock snapshot
 - portfolio/product metadata sidecar snapshots, when present
@@ -90,7 +91,7 @@ It must never contain API keys, authorization headers, or raw image base64 paylo
 
 ## Manifest
 
-`outputs/<campaign>/manifest.json` is the consumer contract:
+`<metadata artifacts.scratch>/<campaign>/manifest.json` is the consumer contract:
 
 ```json
 {
@@ -126,12 +127,12 @@ It must never contain API keys, authorization headers, or raw image base64 paylo
 }
 ```
 
-Published repo artifacts use the product repo's `published/` asset repository
-or git submodule:
+Published repo artifacts use the metadata-declared approved asset directory,
+which may be a package directory, asset repository, or git submodule:
 
 ```text
-published/portfolios/<portfolio-id>/<portfolio-version>/
-published/products/<portfolio-id>/<brand-id>/<brand-lock-version>/artifacts/<campaign>/
+<approved>/portfolios/<portfolio-id>/<portfolio-version>/
+<approved>/products/<portfolio-id>/<brand-id>/<brand-lock-version>/artifacts/<campaign>/
 ```
 
 Portfolio snapshots live in the same asset repository as product snapshots.

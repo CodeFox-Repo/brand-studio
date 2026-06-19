@@ -270,7 +270,7 @@ def load_campaign(path: Path) -> tuple[CampaignConfig, dict[str, Any]]:
 
 def load_harness_config(
     campaign_path: Path,
-    brand_path: Path = Path("workspace/products/codefox/codefox/brand.lock.yaml"),
+    brand_path: Path,
 ) -> LoadedConfig:
     brand, brand_raw = load_brand(brand_path)
     campaign, campaign_raw = load_campaign(campaign_path)
