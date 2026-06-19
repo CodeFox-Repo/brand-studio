@@ -8,8 +8,8 @@ organization:
   name: CodeFox Org
 
 skillDistribution:
-  upstream: CodeFox-Repo/brand-studio
-  fork: CodeFox-Repo/brand-studio
+  upstream: sma1lboy/brand-studio
+  fork: sma1lboy/brand-studio
   scope: org
   ref: main
 

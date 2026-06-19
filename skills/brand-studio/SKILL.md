@@ -60,7 +60,7 @@ organization:
   name: My Org
 
 skillDistribution:
-  upstream: CodeFox-Repo/brand-studio
+  upstream: sma1lboy/brand-studio
   fork: my-org/brand-studio
   scope: org
   ref: main

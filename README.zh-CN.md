@@ -13,7 +13,7 @@ agent 使用的 runtime 在 `skills/brand-studio/scripts/` 里。skill 形态不
 ## 推荐分享方式
 
 个人或团队真实使用时，推荐 fork 这个仓库，再 clone 或 install 自己的 fork。
-`CodeFox-Repo/brand-studio` 只作为通用 upstream；`your-user/brand-studio`
+`sma1lboy/brand-studio` 只作为通用 upstream；`your-user/brand-studio`
 或 `your-org/brand-studio` 才是你们同步 metadata、policy、producer 偏好、
 模板和安装说明的 source of truth。
 
@@ -48,7 +48,7 @@ skill 会帮助 agent 完成这些事：
 Claude Code：
 
 ```bash
-npx skills add CodeFox-Repo/brand-studio \
+npx skills add sma1lboy/brand-studio \
   --skill brand-studio \
   --agent claude-code
 ```

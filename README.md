@@ -17,7 +17,7 @@ There is no top-level `src/` package in the skill shape.
 ## Recommended Sharing Model
 
 For real personal or team use, fork this repository and clone or install from
-your own fork. Treat `CodeFox-Repo/brand-studio` as the generic upstream;
+your own fork. Treat `sma1lboy/brand-studio` as the generic upstream;
 treat `your-user/brand-studio` or `your-org/brand-studio` as the
 shared source of truth for your metadata, policy, producer preferences,
 templates, and install notes.

@@ -62,7 +62,7 @@ organization:
   id: "codefox-org"
   name: "CodeFox Org"
 skillDistribution:
-  upstream: "CodeFox-Repo/brand-studio"
+  upstream: "sma1lboy/brand-studio"
   fork: "codefox-org/brand-studio"
   scope: "org"
   ref: "main"
