@@ -10,7 +10,6 @@ user-accepted assets into repo-owned visual asset state.
 This repo ships one installable skill payload plus maintainer tooling:
 
 - `skills/marketing-harness/`: the installable skill payload.
-- `scripts/package_skill.py`: packages only the skill payload.
 
 The runtime used by agents is bundled under `skills/marketing-harness/scripts/`.
 There is no top-level `src/` package in the skill shape.
@@ -147,5 +146,5 @@ cd skills/marketing-harness/examples/codefox
 python3 ../../scripts/harness.py --metadata marketing.harness.yaml validate
 ```
 
-Only the installable skill payload is packaged by default; examples, tests,
-root maintainer files, and scratch outputs are excluded.
+Use the checked-in skill payload directly through a fork, submodule, or local
+skill install.
