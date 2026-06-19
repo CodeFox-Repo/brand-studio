@@ -21,8 +21,8 @@ def main() -> int:
     proposal = copy.deepcopy(payload["base_brand"])
     proposal["version"] = payload["version"]
 
-    provider = proposal.setdefault("provider", {})
-    params = provider.setdefault("params", {})
+    producer = proposal.setdefault("producer", {})
+    params = producer.setdefault("params", {})
     params["quality"] = "high"
     params["seed"] = 20260620
     params["timeout_seconds"] = max(int(params.get("timeout_seconds", 180)), 240)

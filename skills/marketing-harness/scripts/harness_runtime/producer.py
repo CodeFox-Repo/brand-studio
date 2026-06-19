@@ -2,16 +2,46 @@ from __future__ import annotations
 
 import hashlib
 import html
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
-from harness_runtime.providers.base import GenerationRequest, GenerationResult
+
+class ProducerError(RuntimeError):
+    """Raised when asset production cannot continue."""
+
+
+@dataclass(frozen=True)
+class GenerationRequest:
+    asset_id: str
+    prompt: str
+    negative_prompt: str
+    size: tuple[int, int]
+    seed: int | None
+    producer_id: str
+    model: str | None
+    params: dict[str, Any] = field(default_factory=dict)
+    references: list[str] = field(default_factory=list)
+    palette: list[str] = field(default_factory=list)
+    typography: str | None = None
+    dry_run: bool = False
+
+
+@dataclass(frozen=True)
+class GenerationResult:
+    asset_id: str
+    path: Path
+    seed: int | None
+    mime_type: str
+    producer_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 def write_dry_run_asset(request: GenerationRequest, output_path: Path) -> GenerationResult:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     width, height = request.size
-    prompt_hash = hashlib.sha256(request.prompt.encode("utf-8")).hexdigest()[:12]
-    title = f"{request.asset_id} - {request.model or 'provider-default'}"
+    prompt_sha = hashlib.sha256(request.prompt.encode("utf-8")).hexdigest()
+    prompt_hash = prompt_sha[:12]
+    title = f"{request.asset_id} - {request.model or 'producer-default'}"
     subtitle = f"{width}x{height} - seed {request.seed} - {prompt_hash}"
     bar_height = max(12, height // 18)
     panel_x = width * 0.08
@@ -41,10 +71,10 @@ def write_dry_run_asset(request: GenerationRequest, output_path: Path) -> Genera
         path=output_path,
         seed=request.seed,
         mime_type="image/svg+xml",
-        provider_metadata={
+        producer_metadata={
             "dry_run": True,
-            "gateway": request.gateway,
+            "producer_id": request.producer_id,
             "model": request.model,
-            "prompt_sha256": hashlib.sha256(request.prompt.encode("utf-8")).hexdigest(),
+            "prompt_sha256": prompt_sha,
         },
     )

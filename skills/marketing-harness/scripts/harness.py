@@ -146,7 +146,6 @@ def check_project(args: list[str], metadata: dict[str, Any], metadata_path: str 
     target = args[0] if args else "."
     project_root = project_root_for(metadata, fallback=Path(target).resolve())
     paths = project_paths(metadata, project_root)
-    image_cli = shutil.which("gpt-image") or ""
     yaml_ready = python_module_available("yaml")
 
     print_kv(
@@ -177,8 +176,8 @@ def check_project(args: list[str], metadata: dict[str, Any], metadata_path: str 
             "accepted_state_exists": paths["accepted_state"].exists(),
             "bundled_cli": Path(__file__).resolve().parent / "cli.py",
             "yaml_ready": yaml_ready,
-            "image_cli": image_cli,
-            "live_render_ready": bool(image_cli),
+            "live_render_ready": False,
+            "live_render_note": "use an external producer skill with dry-run context",
             "launcher_ready": yaml_ready,
         }
     )

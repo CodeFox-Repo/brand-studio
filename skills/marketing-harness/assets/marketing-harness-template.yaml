@@ -14,9 +14,9 @@ theme:
 
 producers:
   image:
-    kind: local-command
-    commandEnv: HARNESS_SKILL_CLI_COMMAND
-    defaultCommand: gpt-image
+    kind: external-skill
+    preferred: []
+    allowAutoInstall: false
   design:
     kind: local-skill
     preferred: []

@@ -20,7 +20,7 @@ class AssetManifestInput:
     size: tuple[int, int]
     seed: int | None
     mime_type: str
-    provider_metadata: dict[str, Any] = field(default_factory=dict)
+    producer_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 def build_manifest(
@@ -40,9 +40,9 @@ def build_manifest(
         },
         "theme_version": brand.version,
         "generated_at": generated_at,
-        "provider": {
-            "gateway": brand.provider.gateway,
-            "model": brand.provider.model,
+        "producer": {
+            "id": brand.producer.producer_id,
+            "model": brand.producer.model,
         },
         "assets": [
             {
@@ -58,6 +58,8 @@ def build_manifest(
             for asset in assets
         ],
     }
+
+
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

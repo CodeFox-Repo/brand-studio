@@ -4,8 +4,8 @@
 
 Marketing Harness is an installable agent skill for producing theme-locked
 marketing assets from a product repository. It validates repo visual tokens,
-prepares campaigns, renders through local producer capabilities, and records
-only user-accepted assets into repo-owned visual asset state.
+prepares campaigns, exports producer-ready dry-run context, and records only
+user-accepted assets into repo-owned visual asset state.
 
 This repo ships one installable skill payload plus maintainer tooling:
 
@@ -30,7 +30,7 @@ The skill helps an agent:
 - read organization, repo, related-repo, and directory asset state before planning.
 - validate `theme.md` frontmatter and campaign files.
 - run dry-run renders without spending API credits.
-- call local producer capabilities for live assets.
+- hand dry-run context to user-selected producer skills for live assets.
 - require human asset review before state updates.
 - copy accepted files into approved assets and update `accepted.yaml`.
 
@@ -102,12 +102,12 @@ python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.ya
 ## Theme Contract
 
 `theme.md` is the single source of truth for a repo's visual direction. YAML
-frontmatter stores machine-readable style tokens and provider config; the
+frontmatter stores machine-readable style tokens and producer hints; the
 Markdown body explains the design direction for humans and agents.
 
 Campaign files can only choose a locked style alias and provide current content:
 headline, subject, and deliverable sizes. They must not inline prompts,
-palettes, negative prompts, reference images, model names, or provider params.
+palettes, negative prompts, reference images, model names, or producer params.
 
 ## Producer Capabilities
 
@@ -119,10 +119,11 @@ producers.
 
 ## Human Review
 
-Live render approval and asset approval are different. The skill should dry-run
-first, ask before spending API credits, render live only after approval, then
-show generated files for review. Accepted state should change only after the
-user or reviewer explicitly accepts exact files or asset ids.
+Live generation approval and asset approval are different. The skill should
+dry-run first, ask before spending API credits, pass the exported context to the
+selected producer only after approval, then show generated files for review.
+Accepted state should change only after the user or reviewer explicitly accepts
+exact files or asset ids.
 
 ## Verification
 

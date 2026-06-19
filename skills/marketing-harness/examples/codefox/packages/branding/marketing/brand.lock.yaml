@@ -9,8 +9,7 @@ brand:
   id: "codefox"
   name: "CodeFox"
 
-provider:
-  gateway: "gpt-image-skill"
+producer:
   params:
     seed_strategy: "fixed"
     seed: 12345

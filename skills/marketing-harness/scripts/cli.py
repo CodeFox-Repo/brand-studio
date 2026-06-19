@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from harness_runtime.config import ConfigError, load_harness_config
-from harness_runtime.providers import ProviderError
+from harness_runtime.producer import ProducerError
 from harness_runtime.render import render_campaign
 
 
@@ -19,7 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args.handler(args)
         return 0
-    except (ConfigError, ProviderError, FileNotFoundError, ValueError) as exc:
+    except (ConfigError, ProducerError, FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 

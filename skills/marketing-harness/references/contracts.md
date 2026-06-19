@@ -3,7 +3,7 @@
 ## Theme
 
 `theme.md` is the repo visual direction single source of truth. It must start
-with YAML frontmatter containing the machine-readable style tokens and provider
+with YAML frontmatter containing the machine-readable style tokens and producer
 config, followed by Markdown design direction for humans and agents.
 
 Required top-level fields:
@@ -13,9 +13,9 @@ repo:
   id: "codefox"
   name: "CodeFox"
 version: "1.1.0"
-provider:
-  gateway: "gpt-image-skill"
-  # Optional: model: "<image-cli-model-name>"
+producer:
+  # Optional: id: "<local-producer-skill-or-capability>"
+  # Optional: model: "<producer-model-name>"
   params: {}
 global: {}
 alias: {}
@@ -28,12 +28,12 @@ Token rules:
 - `alias.style.*` contains semantic style composites.
 - Alias references may only use `{global.path.to-token}`.
 - Use kebab-case token and group names.
-- Changing provider params or visual tokens requires a version bump and dry-run review.
-- `provider.model` is optional. The marketing harness only passes it through when present.
+- Changing producer params or visual tokens requires a version bump and dry-run review.
+- `producer.model` is optional. The marketing harness only passes it through when present.
 
 `repo.version` is the theme lock version for this repo's visual asset tree.
 Generating a campaign does not bump it. Change it only when locked visual
-tokens or provider config change.
+tokens or producer config change.
 
 ## Metadata, Elements, And Asset State
 
@@ -67,9 +67,9 @@ theme:
   references: "assets/marketing/references"
 producers:
   image:
-    kind: "local-command"
-    commandEnv: "HARNESS_SKILL_CLI_COMMAND"
-    defaultCommand: "gpt-image"
+    kind: "external-skill"
+    preferred: []
+    allowAutoInstall: false
   design:
     kind: "local-skill"
     preferred: []
@@ -100,10 +100,10 @@ recorded in the production plan or review notes.
 Third-party producer skills are local capabilities, not dependencies vendored by
 this skill. The metadata can declare producer preferences, but agents must not
 auto-download, auto-install, or silently switch producer implementations.
-Marketing Harness orchestrates planning, state, review, and rendering calls; it
+Marketing Harness orchestrates planning, state, review, and dry-run context; it
 does not own the actual image, slide, logo, or social-card producer skill.
 
-- `producers.image`: image generation command or local image skill.
+- `producers.image`: optional local or external image producer skill.
 - `producers.slide`: optional local presentation/PPT producer.
 - `producers.logo`: optional local logo or vector producer.
 - `producers.social`: optional local social-card producer.
@@ -128,7 +128,7 @@ deliverables:
     size: [1920, 600]
 ```
 
-Campaigns must not include style prompt fragments, palette, negative prompts, references, or provider params.
+Campaigns must not include style prompt fragments, palette, negative prompts, references, or producer params.
 
 ## Production Plan
 
@@ -203,8 +203,8 @@ exist in the directory and were accepted or explicitly curated.
 - full campaign snapshot
 - resolved style
 - prompt per asset
-- seed and provider params
-- sanitized provider metadata
+- seed and producer params
+- sanitized producer metadata
 
 It must never contain API keys, authorization headers, or raw image base64 payloads.
 
@@ -222,8 +222,8 @@ It must never contain API keys, authorization headers, or raw image base64 paylo
     "version": "1.1.0"
   },
   "theme_version": "1.1.0",
-  "provider": {
-    "gateway": "gpt-image-skill",
+  "producer": {
+    "id": "external-producer",
     "model": null
   },
   "assets": [

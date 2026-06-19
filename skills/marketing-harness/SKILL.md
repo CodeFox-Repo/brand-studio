@@ -3,8 +3,8 @@ name: marketing-harness
 description: >-
   Use this skill to operate thin marketing-harness scripts from a product repo:
   read YAML/JSON metadata, plan theme-locked campaigns, validate theme.md and
-  campaign YAML, render candidates through a local image skill/CLI provider,
-  and record only user-accepted assets into repo-owned visual state.
+  campaign YAML, export producer-ready dry-run context, and record only
+  user-accepted assets into repo-owned visual state.
 ---
 
 # Marketing Harness
@@ -54,9 +54,9 @@ theme:
 
 producers:
   image:
-    kind: local-command
-    commandEnv: HARNESS_SKILL_CLI_COMMAND
-    defaultCommand: gpt-image
+    kind: external-skill
+    preferred: []
+    allowAutoInstall: false
   design:
     kind: local-skill
     preferred: []
@@ -144,7 +144,7 @@ show the user the planned directories before any write.
 
 ## Common Defaults
 
-- Always dry-run before live render.
+- Always dry-run before asking any external producer to generate live assets.
 - Do not commit automatically.
 - Do not call image APIs until the user has approved the cost/action.
 - Do not update accepted state until the user has accepted specific generated
@@ -179,13 +179,15 @@ Proposal review flow:
 
 ## Production Lifecycle
 
-Before live render, confirm API usage and possible cost. The harness treats
-third-party production skills as local producer capabilities, not vendored
-dependencies. Declare producers in metadata, then use only locally installed or
-explicitly configured producers. Do not auto-download, auto-install, or silently
-switch production providers. Credentials belong in the environment; never
-print, commit, or copy them into configuration files. `provider.model` is
-optional; when omitted, this skill lets the image provider choose its default.
+Before live generation, confirm API usage, possible cost, and the exact
+external producer skill. The harness treats third-party production skills as
+local producer capabilities, not vendored dependencies. It does not wrap GPT,
+OpenAI, or any image API. Declare producers in metadata, then use only locally
+installed or explicitly configured producers. Do not auto-download,
+auto-install, or silently switch production producers. Credentials belong to
+the selected producer's environment; never print, commit, or copy them into
+configuration files. `producer.model` is an optional hint; the selected
+producer decides whether it supports it.
 
 Use this loop:
 
@@ -194,8 +196,9 @@ Use this loop:
    metadata.
 2. Write or update a production plan under `state.plans`.
 3. Validate the plan inputs and run a dry render.
-4. Ask the user to approve live generation cost.
-5. Generate candidates into `artifacts.scratch`.
+4. Ask the user to approve live generation cost and the external producer.
+5. Pass the dry-run context to the selected producer and place candidates in
+   `artifacts.scratch`.
 6. Show candidate paths, manifest, run lock, and review notes.
 7. Ask the user which exact candidates are accepted.
 8. Copy accepted files into `artifacts.approved` and update `state.accepted`.

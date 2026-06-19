@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-Marketing Harness 是一个可安装的 agent skill，用来生产“主题风格锁定”的宣发图片。安装一次后，在任意业务 repo 里唤起它；agent 会校验视觉 token、准备 campaign、通过本地 image skill/CLI 出图，并只把人工验收过的资产沉淀到当前业务 repo 的视觉资产状态里。
+Marketing Harness 是一个可安装的 agent skill，用来规划和沉淀“主题风格锁定”的宣发资产。安装一次后，在任意业务 repo 里唤起它；agent 会校验视觉 token、准备 campaign、导出给第三方素材生产 skill 使用的 dry-run 上下文，并只把人工验收过的资产沉淀到当前业务 repo 的视觉资产状态里。
 
 这个 repo 交付一个可安装 skill payload 和维护工具：
 
@@ -26,7 +26,7 @@ skill 会帮助 agent 完成这些事：
 - 构建或更新 theme notes 和 design-token 风格锁。
 - 校验 `theme.md` frontmatter 和 campaign YAML。
 - 先跑不花 API 钱的 dry-run。
-- 通过本地 image skill/CLI 做真实出图。
+- 把 dry-run 上下文交给用户选择的第三方素材生产 skill。
 - 在更新状态前要求人工验收产物。
 - 把已接受文件复制到 approved assets，并更新 `accepted.yaml`。
 
@@ -119,7 +119,7 @@ vendored 的依赖。`producers.image`、`producers.slide`、`producers.logo`、
 ## Theme Contract
 
 `theme.md` 是当前 repo 视觉方向的 single source of truth。YAML frontmatter
-存机器可读的 style tokens 和 provider config，Markdown 正文写给人和 agent
+存机器可读的 style tokens 和 producer hints，Markdown 正文写给人和 agent
 看的设计理念。token 结构遵循 W3C Design Tokens Format Module 的 `$value` +
 `$type` 约定。
 
@@ -130,13 +130,13 @@ vendored 的依赖。`producers.image`、`producers.slide`、`producers.logo`、
 - `global`: 原始视觉决策，例如颜色、字体、风格片段、负向词和参考资产。
 - `alias`: 语义风格配方，引用 `global`，例如 `alias.style.launch-hero`。
 
-campaign 只能选择已经锁定的 style alias，并填写这次的内容：headline、subject、deliverable size。campaign 不能内联 prompt、palette、negative prompt、reference image、model 或 provider params。`theme.md` frontmatter 里的 `provider.model` 是可选项；不写时由底层 image CLI 使用自己的默认模型。
+campaign 只能选择已经锁定的 style alias，并填写这次的内容：headline、subject、deliverable size。campaign 不能内联 prompt、palette、negative prompt、reference image、model 或 producer params。`theme.md` frontmatter 里的 `producer.model` 是可选提示；是否使用由外部 producer skill 决定。
 
 ## 人工验收
 
 同意花 API 钱出图，不等于同意发布产物。
 
-skill 应先 dry-run；真实调用 API 前确认成本；live render 后展示生成文件给用户检查。只有用户或 reviewer 明确接受具体文件或 asset id 后，才更新 accepted state。
+skill 应先 dry-run；真实调用 API 前确认成本和所选 producer；生成后展示文件给用户检查。只有用户或 reviewer 明确接受具体文件或 asset id 后，才更新 accepted state。
 
 修改官方 theme 或沉淀 live assets 前，用 dry-run render 做人工复核。harness 不假装自动判断图片质量，也不提供用户手动添加资产的命令界面。
 
@@ -169,17 +169,9 @@ dry-run 和校验：
 - Python 3.9+
 - 推荐安装 `uv`
 
-真实出图：
-
-- 本地 image skill/CLI，或用 `HARNESS_SKILL_CLI_COMMAND` 指向等价命令
-- 通过环境变量提供所选 image provider 的凭证，例如：
-
-```bash
-OPENAI_API_KEY=...
-OPENAI_BASE_URL=https://api.openai.com/v1
-```
-
-密钥只从环境读取，不应写进 YAML、manifest、run lock、日志或 accepted 快照。
+真实素材生成由外部 producer skill 负责。Marketing Harness 不保存 API key，
+也不包装 OpenAI/Gemini/其他图像 API。凭证只应该存在于所选 producer 的环境
+或配置里，不应写进 YAML、manifest、run lock、日志或 accepted 快照。
 
 ## 维护者说明
 

@@ -4,8 +4,7 @@ repo:
   name: "CodeFox"
 version: "1.1.0"
 
-provider:
-  gateway: "gpt-image-skill"
+producer:
   params:
     seed_strategy: "fixed"
     seed: 12345

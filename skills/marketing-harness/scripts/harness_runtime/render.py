@@ -15,7 +15,7 @@ from harness_runtime.config import (
     load_harness_config,
 )
 from harness_runtime.manifest import AssetManifestInput, build_manifest, checksum_file, write_json
-from harness_runtime.providers import GenerationRequest, ImageProvider, create_provider
+from harness_runtime.producer import GenerationRequest, ProducerError, write_dry_run_asset
 
 
 @dataclass(frozen=True)
@@ -31,21 +31,25 @@ def render_campaign(
     brand_path: Path,
     outputs_dir: Path = Path("outputs"),
     dry_run: bool = False,
-    provider: ImageProvider | None = None,
 ) -> RenderResult:
     loaded = load_harness_config(campaign_path=campaign_path, brand_path=brand_path)
-    return render_loaded_config(loaded, outputs_dir=outputs_dir, dry_run=dry_run, provider=provider)
+    return render_loaded_config(loaded, outputs_dir=outputs_dir, dry_run=dry_run)
 
 
 def render_loaded_config(
     loaded: LoadedConfig,
     outputs_dir: Path = Path("outputs"),
     dry_run: bool = False,
-    provider: ImageProvider | None = None,
 ) -> RenderResult:
+    if not dry_run:
+        raise ProducerError(
+            "live asset generation is handled by an external producer skill. "
+            "Run render --dry-run to export prompts, manifest, and run.lock context, "
+            "then pass that context to the selected producer."
+        )
+
     campaign = loaded.campaign
     brand = loaded.brand
-    provider = provider or create_provider(brand.provider)
     output_dir = outputs_dir / campaign.name
     output_dir.mkdir(parents=True, exist_ok=True)
     generated_at = datetime.now(timezone.utc).isoformat()
@@ -55,8 +59,8 @@ def render_loaded_config(
 
     for deliverable in campaign.deliverables:
         seed = seed_for_asset(
-            brand.provider.params.seed_strategy,
-            brand.provider.params.seed,
+            brand.producer.params.seed_strategy,
+            brand.producer.params.seed,
             campaign.name,
             deliverable.id,
         )
@@ -66,7 +70,7 @@ def render_loaded_config(
             campaign.content,
             deliverable,
         )
-        output_format = "svg" if dry_run else brand.provider.params.output_format
+        output_format = "svg" if dry_run else brand.producer.params.output_format
         output_path = output_dir / f"{deliverable.id}.{output_format}"
         request = GenerationRequest(
             asset_id=deliverable.id,
@@ -74,15 +78,15 @@ def render_loaded_config(
             negative_prompt=loaded.resolved_style.negative,
             size=deliverable.size,
             seed=seed,
-            gateway=brand.provider.gateway,
-            model=brand.provider.model,
-            params=brand.provider.params.model_dump(exclude_none=True),
+            producer_id=brand.producer.producer_id,
+            model=brand.producer.model,
+            params=brand.producer.params.model_dump(exclude_none=True),
             references=loaded.resolved_style.references,
             palette=loaded.resolved_style.palette,
             typography=loaded.resolved_style.typography,
             dry_run=dry_run,
         )
-        result = provider.generate(request, output_path)
+        result = write_dry_run_asset(request, output_path)
         asset = AssetManifestInput(
             id=deliverable.id,
             file=result.path.name,
@@ -90,7 +94,7 @@ def render_loaded_config(
             size=deliverable.size,
             seed=result.seed,
             mime_type=result.mime_type,
-            provider_metadata=result.provider_metadata,
+            producer_metadata=result.producer_metadata,
         )
         assets.append(asset)
         run_assets.append(
@@ -101,7 +105,7 @@ def render_loaded_config(
                 "seed": result.seed,
                 "prompt": prompt,
                 "negative_prompt": loaded.resolved_style.negative,
-                "provider_metadata": result.provider_metadata,
+                "producer_metadata": result.producer_metadata,
             }
         )
 
@@ -134,10 +138,10 @@ def render_loaded_config(
             "negative": loaded.resolved_style.negative,
             "references": loaded.resolved_style.references,
         },
-        "provider": {
-            "gateway": brand.provider.gateway,
-            "model": brand.provider.model,
-            "params": brand.provider.params.model_dump(exclude_none=True),
+        "producer": {
+            "id": brand.producer.producer_id,
+            "model": brand.producer.model,
+            "params": brand.producer.params.model_dump(exclude_none=True),
         },
         "assets": run_assets,
     }

@@ -13,8 +13,18 @@ except ImportError:  # pragma: no cover - exercised only on minimal Python insta
 TOKEN_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 REFERENCE_RE = re.compile(r"\{([^{}]+)\}")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
-BRAND_ALLOWED = {"repo", "theme", "brand", "portfolio", "version", "provider", "global", "alias"}
-PROVIDER_ALLOWED = {"gateway", "model", "params"}
+BRAND_ALLOWED = {
+    "repo",
+    "theme",
+    "brand",
+    "portfolio",
+    "version",
+    "producer",
+    "provider",
+    "global",
+    "alias",
+}
+PRODUCER_ALLOWED = {"id", "gateway", "model", "params"}
 CAMPAIGN_ALLOWED = {"name", "brief", "style", "content", "deliverables"}
 CONTENT_ALLOWED = {"headline", "subject"}
 DELIVERABLE_ALLOWED = {"id", "size"}
@@ -33,7 +43,7 @@ class UnknownStyleError(ConfigError):
 
 
 @dataclass(frozen=True)
-class ProviderParams:
+class ProducerParams:
     seed_strategy: str = "fixed"
     seed: int | None = 12345
     guidance: float | None = None
@@ -60,10 +70,10 @@ class ProviderParams:
 
 
 @dataclass(frozen=True)
-class ProviderConfig:
-    gateway: str = "gpt-image-skill"
+class ProducerConfig:
+    producer_id: str = "external-producer"
     model: str | None = None
-    params: ProviderParams = field(default_factory=ProviderParams)
+    params: ProducerParams = field(default_factory=ProducerParams)
 
 
 @dataclass(frozen=True)
@@ -84,7 +94,7 @@ class BrandLock:
     portfolio: PortfolioIdentity | None
     brand: BrandIdentity
     version: str
-    provider: ProviderConfig
+    producer: ProducerConfig
     global_tokens: dict[str, Any]
     alias_tokens: dict[str, Any]
 
@@ -236,35 +246,38 @@ def parse_brand_lock(raw: dict[str, Any], context: str) -> BrandLock:
     if repo_raw is None:
         raise ConfigError(f"{context}: repo is required")
     portfolio_raw = optional_mapping(raw, "portfolio", context)
+    producer_raw = optional_mapping(raw, "producer", context)
+    if producer_raw is None:
+        producer_raw = optional_mapping(raw, "provider", context) or {}
+
     return BrandLock(
         portfolio=parse_portfolio(portfolio_raw, f"{context}.portfolio")
         if portfolio_raw is not None
         else None,
         brand=parse_brand_identity(repo_raw, f"{context}.repo"),
         version=require_semver(raw, "version", context),
-        provider=parse_provider(
-            optional_mapping(raw, "provider", context) or {},
-            f"{context}.provider",
-        ),
+        producer=parse_producer(producer_raw, f"{context}.producer"),
         global_tokens=required_mapping(raw, "global", context),
         alias_tokens=required_mapping(raw, "alias", context),
     )
 
 
-def parse_provider(raw: dict[str, Any], context: str) -> ProviderConfig:
-    forbid_extra(raw, PROVIDER_ALLOWED, context)
-    gateway = optional_string(raw, "gateway", context) or "gpt-image-skill"
-    if gateway not in {"skill-cli", "gpt-image-skill"}:
-        raise ConfigError(f"{context}.gateway: supported values are skill-cli, gpt-image-skill")
+def parse_producer(raw: dict[str, Any], context: str) -> ProducerConfig:
+    forbid_extra(raw, PRODUCER_ALLOWED, context)
+    producer_id = (
+        optional_string(raw, "id", context)
+        or optional_string(raw, "gateway", context)
+        or "external-producer"
+    )
     model = optional_string(raw, "model", context)
-    return ProviderConfig(
-        gateway=gateway,
+    return ProducerConfig(
+        producer_id=producer_id,
         model=model,
-        params=parse_provider_params(optional_mapping(raw, "params", context) or {}, context),
+        params=parse_producer_params(optional_mapping(raw, "params", context) or {}, context),
     )
 
 
-def parse_provider_params(raw: dict[str, Any], context: str) -> ProviderParams:
+def parse_producer_params(raw: dict[str, Any], context: str) -> ProducerParams:
     params = dict(raw)
     seed_strategy = str(params.pop("seed_strategy", "fixed"))
     if seed_strategy not in {"fixed", "per_asset", "random"}:
@@ -288,7 +301,7 @@ def parse_provider_params(raw: dict[str, Any], context: str) -> ProviderParams:
     if not re.fullmatch(r"^[a-z0-9]+$", output_format):
         raise ConfigError(f"{context}.params.output_format: must be lowercase alphanumeric")
 
-    return ProviderParams(
+    return ProducerParams(
         seed_strategy=seed_strategy,
         seed=seed,
         guidance=guidance,

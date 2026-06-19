@@ -263,8 +263,7 @@ repo:
   id: test-repo
   name: Test Repo
 version: 1.0.0
-provider:
-  gateway: gpt-image-skill
+producer:
   params:
     seed_strategy: fixed
     seed: 7
@@ -328,3 +327,9 @@ deliverables:
     output_dir = project / "packages/branding/.harness/out/launch"
     assert (output_dir / "web-banner.svg").is_file()
     assert (output_dir / "manifest.json").is_file()
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    run_lock = json.loads((output_dir / "run.lock.json").read_text(encoding="utf-8"))
+    assert "provider" not in manifest
+    assert manifest["producer"] == {"id": "external-producer", "model": None}
+    assert "provider" not in run_lock
+    assert run_lock["producer"]["params"]["seed"] == 7
