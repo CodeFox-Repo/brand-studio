@@ -61,6 +61,11 @@ before planning:
 organization:
   id: "codefox-org"
   name: "CodeFox Org"
+skillDistribution:
+  upstream: "CodeFox-Repo/marketing-harness"
+  fork: "codefox-org/marketing-harness"
+  scope: "org"
+  ref: "main"
 theme:
   path: "assets/marketing/theme.md"
   campaigns: "assets/marketing/campaigns"
@@ -94,6 +99,19 @@ sources:
 Use local related repo paths when available. Remote GitHub/GitLab state should
 be fetched only when declared by metadata, and the resolved commit must be
 recorded in the production plan or review notes.
+
+## Skill Forks And Shared Metadata
+
+For personal or organization use, fork the upstream skill repo and clone or
+install from that fork. The fork is the right place for shared defaults that
+multiple people or repos should see: producer preferences, policy defaults,
+templates, install notes, and org-level metadata. Product-specific theme locks,
+campaigns, accepted state, and public assets stay in product repos or asset
+repos.
+
+Agents should respect `skillDistribution.fork` or the repo's pinned submodule
+when present. They should not silently switch back to the upstream repo because
+that can drop team metadata and policy.
 
 ## Producer Capabilities
 

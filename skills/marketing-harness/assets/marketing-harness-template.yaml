@@ -7,6 +7,12 @@ organization:
   id: my-org
   name: My Org
 
+skillDistribution:
+  upstream: CodeFox-Repo/marketing-harness
+  fork: my-org/marketing-harness
+  scope: org
+  ref: main
+
 theme:
   path: assets/marketing/theme.md
   campaigns: assets/marketing/campaigns

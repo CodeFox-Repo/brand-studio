@@ -15,6 +15,19 @@ This repo ships one installable skill payload plus maintainer tooling:
 The runtime used by agents is bundled under `skills/marketing-harness/scripts/`.
 There is no top-level `src/` package in the skill shape.
 
+## Recommended Sharing Model
+
+For real personal or team use, fork this repository and clone or install from
+your own fork. Treat `CodeFox-Repo/marketing-harness` as the generic upstream;
+treat `your-user/marketing-harness` or `your-org/marketing-harness` as the
+shared source of truth for your metadata, policy, producer preferences,
+templates, and install notes.
+
+Product repos should pin that fork through a submodule, tag, or local install.
+Keep product-specific `theme.md`, campaigns, accepted state, and public assets
+inside the product repo or its asset repo. Keep cross-person or cross-repo
+defaults in the fork so teammates can pull the same skill behavior.
+
 ## What The Skill Does
 
 Marketing Harness keeps style, campaign content, production, and accepted state

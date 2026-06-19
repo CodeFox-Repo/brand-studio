@@ -7,6 +7,12 @@ organization:
   id: codefox-org
   name: CodeFox Org
 
+skillDistribution:
+  upstream: CodeFox-Repo/marketing-harness
+  fork: CodeFox-Repo/marketing-harness
+  scope: org
+  ref: main
+
 theme:
   path: packages/branding/marketing/theme.md
   campaigns: packages/branding/marketing/campaigns

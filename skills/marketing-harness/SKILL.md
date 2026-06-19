@@ -29,6 +29,18 @@ the durable corpus only when a user accepts generated candidates or explicitly
 marks existing work as accepted during review. Treat low-level scripts as
 internal agent helpers, not as instructions for users to add assets manually.
 
+## Skill Distribution
+
+For personal or organization use, prefer a fork of the upstream skill repo.
+Treat the upstream repo as the generic runtime/template source, and treat the
+personal or org fork as the shared source for team metadata, policies, producer
+preferences, templates, and install notes.
+
+When working inside a product repo, use the product repo's pinned fork or local
+skill install. Do not silently switch to upstream. Product-specific `theme.md`,
+campaigns, accepted state, and public assets remain in the product repo or its
+asset repo; cross-person defaults belong in the fork.
+
 ## Metadata First
 
 This skill is for AI agents. Do not rely on hard-coded product paths. Start by
@@ -46,6 +58,12 @@ project:
 organization:
   id: my-org
   name: My Org
+
+skillDistribution:
+  upstream: CodeFox-Repo/marketing-harness
+  fork: my-org/marketing-harness
+  scope: org
+  ref: main
 
 theme:
   path: assets/marketing/theme.md
