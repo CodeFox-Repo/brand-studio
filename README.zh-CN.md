@@ -127,7 +127,9 @@ python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.ya
 context。默认只读最新版本；传 `--releases 4` 时会读取最近四个版本，生成近期
 release notes 页。release producer prompt 默认把 release notes 页面作为主体：
 页头、metadata chips、版本标题和 changelog 条目行，而不是把 changelog 塞成普通
-产品 hero 旁边的小面板。它会检查 repo 根目录和 package 目录。
+产品 hero 旁边的小面板。它会检查 repo 根目录和 package 目录。可编辑的
+`copy.yaml` 只把 `releases[]` 作为 canonical 文案资产，不再写单独的
+`key_points`。
 
 只想先审或 revise 文案时，先跑：
 

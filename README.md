@@ -119,7 +119,8 @@ build a recent-release notes page from the latest four versions. Release
 producer prompts make the release notes page the main subject: header, metadata
 chips, version headings, and changelog rows. They should not treat the changelog
 as a small side panel on a generic product hero. The launcher checks the repo
-root and package directories.
+root and package directories. The editable `copy.yaml` exposes `releases[]` as
+the canonical text asset; it does not write a separate `key_points` block.
 
 Generate only the text asset when you want to review or revise the wording:
 

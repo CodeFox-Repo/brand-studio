@@ -234,6 +234,8 @@ image generation. It reads release entries from standard `CHANGELOG.md`
 locations and writes a structured `copy.yaml` under the scratch directory. It
 reads one latest release by default; use `--releases 4` for recent-release notes.
 Treat that file as the text-asset handoff into campaign and image production.
+`copy.yaml` exposes `releases[]` as the canonical editable text asset and does
+not write a separate `key_points` block.
 
 ```bash
 python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.yaml \

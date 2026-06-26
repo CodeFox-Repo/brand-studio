@@ -430,6 +430,8 @@ alias:
     assert 'product: "kobe"' in copy_text
     assert 'version: "0.7.33"' in copy_text
     assert 'release_theme: "Faster task starts, deeper workspace control"' in copy_text
+    assert "key_points:" not in copy_text
+    assert "releases:" in copy_text
     assert 'title: "Jump straight into the engine"' in copy_text
     assert 'title: "Control layouts without losing work"' in copy_text
     copy_path.write_text(
@@ -603,6 +605,7 @@ alias:
     assert "changelog_count=4" in copy.stdout
     copy_path = project / "packages/branding/.harness/out/release-v0-7-33/copy.yaml"
     copy_text = copy_path.read_text(encoding="utf-8")
+    assert "key_points:" not in copy_text
     assert "releases:" in copy_text
     assert 'version: "0.7.33"' in copy_text
     assert 'version: "0.7.32"' in copy_text
