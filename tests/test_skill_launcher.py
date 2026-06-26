@@ -642,3 +642,97 @@ alias:
     assert 'Version heading: "v0.7.31"' in release_prompt
     assert 'Version heading: "v0.7.30"' in release_prompt
     assert "0.7.29" not in release_prompt
+
+
+def test_release_render_rejects_malformed_release_copy_rows(tmp_path: Path) -> None:
+    project = tmp_path
+    theme = project / "packages/branding/marketing/theme.md"
+    metadata_path = project / "marketing.harness.json"
+    copy_path = project / "copy.yaml"
+    theme.parent.mkdir(parents=True)
+    theme.write_text(
+        """
+---
+repo:
+  id: test-repo
+  name: Test Repo
+version: 1.0.0
+producer:
+  params:
+    seed_strategy: fixed
+    seed: 7
+    output_format: png
+global:
+  style-fragment:
+    base:
+      $value: clean release editorial product board
+      $type: text
+  color:
+    primary:
+      $value: "#112233"
+      $type: color
+alias:
+  style:
+    launch-hero:
+      $value:
+        prompt: "{global.style-fragment.base}"
+        palette:
+          - "{global.color.primary}"
+        negative: ""
+        references: []
+      $type: composite
+---
+
+# Test Repo Theme
+""".lstrip(),
+        encoding="utf-8",
+    )
+    metadata_path.write_text(json.dumps(metadata(project)), encoding="utf-8")
+    copy_path.write_text(
+        """
+schema_version: "1.0"
+kind: "release_copy"
+product: "kobe"
+version: "0.7.33"
+release_theme: "Recent release notes"
+headline: "Recent release notes"
+subheadline: "kobe recent release notes."
+releases:
+  - package: "kobe"
+    version: "0.7.33"
+    changes:
+      - title: "Valid row"
+        detail: "This row should remain present."
+  - package: "kobe"
+    version: "0.7.32"
+    changes:
+      - title: "Missing detail row"
+        source_package: "kobe"
+        source_version: "0.7.32"
+audience: []
+visual_direction:
+  mood: "release notes page"
+  motifs: []
+  avoid: []
+sources: []
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    release = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "release-render",
+            "--copy",
+            str(copy_path),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert release.returncode == 1
+    assert "releases[2].changes[1] requires title and detail" in release.stderr

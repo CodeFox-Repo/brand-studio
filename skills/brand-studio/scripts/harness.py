@@ -597,7 +597,9 @@ def normalize_release_copy_asset(
         if not str(data.get(key) or "").strip():
             return None, f"{path}: release copy asset missing {key}"
 
-    releases = release_copy_releases(data.get("releases"))
+    releases, releases_error = release_copy_releases(data.get("releases"), path)
+    if releases_error:
+        return None, releases_error
     if not releases:
         legacy_points, error = release_copy_legacy_points(data.get("key_points"), path)
         if error:
@@ -656,45 +658,57 @@ def release_copy_legacy_points(
     return points, None
 
 
-def release_copy_releases(value: Any) -> list[dict[str, Any]]:
+def release_copy_releases(
+    value: Any,
+    path: Path,
+) -> tuple[list[dict[str, Any]], str | None]:
+    if value is None:
+        return [], None
     if not isinstance(value, list):
-        return []
+        return [], f"{path}: release copy asset releases must be a list"
+    if not value:
+        return [], f"{path}: release copy asset releases must be a non-empty list"
     releases: list[dict[str, Any]] = []
-    for item in value:
+    for release_index, item in enumerate(value, start=1):
         if not isinstance(item, dict):
-            continue
+            return [], f"{path}: releases[{release_index}] must be an object"
+        version = str(item.get("version") or "").strip()
+        if not version:
+            return [], f"{path}: releases[{release_index}] requires version"
         changes: list[dict[str, str]] = []
         raw_changes = item.get("changes")
-        if isinstance(raw_changes, list):
-            for raw_change in raw_changes:
-                if not isinstance(raw_change, dict):
-                    continue
-                title = str(raw_change.get("title") or "").strip()
-                detail = str(raw_change.get("detail") or "").strip()
-                if not title or not detail:
-                    continue
-                changes.append(
-                    {
-                        "title": title,
-                        "detail": detail,
-                        "source_package": str(
-                            raw_change.get("source_package") or ""
-                        ).strip(),
-                        "source_version": str(
-                            raw_change.get("source_version") or ""
-                        ).strip(),
-                    }
+        if not isinstance(raw_changes, list) or not raw_changes:
+            return [], f"{path}: releases[{release_index}].changes must be a non-empty list"
+        for change_index, raw_change in enumerate(raw_changes, start=1):
+            if not isinstance(raw_change, dict):
+                return (
+                    [],
+                    f"{path}: releases[{release_index}].changes[{change_index}] must be an object",
                 )
-        version = str(item.get("version") or "").strip()
-        if version and changes:
-            releases.append(
+            title = str(raw_change.get("title") or "").strip()
+            detail = str(raw_change.get("detail") or "").strip()
+            if not title or not detail:
+                return (
+                    [],
+                    f"{path}: releases[{release_index}].changes[{change_index}] "
+                    "requires title and detail",
+                )
+            changes.append(
                 {
-                    "package": str(item.get("package") or "").strip(),
-                    "version": version,
-                    "changes": changes,
+                    "title": title,
+                    "detail": detail,
+                    "source_package": str(raw_change.get("source_package") or "").strip(),
+                    "source_version": str(raw_change.get("source_version") or "").strip(),
                 }
             )
-    return releases
+        releases.append(
+            {
+                "package": str(item.get("package") or "").strip(),
+                "version": version,
+                "changes": changes,
+            }
+        )
+    return releases, None
 
 
 def release_copy_string_list(value: Any) -> list[str]:
