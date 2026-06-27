@@ -238,7 +238,7 @@ file whose scope is intentionally narrower than the product repo.
 - seed and producer params
 - sanitized producer metadata
 
-It must never contain API keys, authorization headers, or raw image base64 payloads.
+It must never contain API keys, authorization headers, or inline-encoded image payloads.
 
 ## Dry-Run Manifest
 

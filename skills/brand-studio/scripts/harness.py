@@ -36,20 +36,24 @@ CHANGELOG_VERSION_HEADING_RE = re.compile(
 )
 CHANGELOG_LINK_DEF_RE = re.compile(r"^\[[^\]]+\]:\s")
 IGNORED_SCAN_DIRS = {
+    ".dev-sandbox",
     ".git",
     ".harness",
+    ".kobe",
     ".next",
     ".nuxt",
     ".pytest_cache",
     ".ruff_cache",
     ".turbo",
     ".venv",
+    ".worktrees",
     "__pycache__",
     "build",
     "coverage",
     "dist",
     "node_modules",
     "out",
+    "worktrees",
 }
 RELEASE_VALUE_OPTIONS = {
     "--version",
@@ -1381,8 +1385,16 @@ def read_latest_changelog_entries(
         return [], f"{resolve_project_path(project_root, changelog_value)}: changelog not found"
 
     entries: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
     for path in changelog_files:
-        entries.extend(read_changelog_entries(path, release_count))
+        for entry in read_changelog_entries(path, release_count):
+            key = (str(entry.get("package") or ""), str(entry.get("version") or ""))
+            if key in seen:
+                continue
+            seen.add(key)
+            entries.append(entry)
+            if len(entries) >= release_count:
+                return entries, None
     return entries, None
 
 

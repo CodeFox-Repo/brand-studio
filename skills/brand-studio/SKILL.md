@@ -365,6 +365,30 @@ exports `producer-context.json` for the metadata-selected image producer skill.
 Use `release-campaign --write` only when you need to inspect or edit the
 generated campaign before producer handoff.
 
+### Release Image Production Checklist
+
+`release-render` is a dry-run and producer handoff. It writes `copy.yaml`, a
+campaign file, SVG placeholders, a dry-run `manifest.json`, and
+`producer-context.json`, but it does not create a real image. Treat the output
+as ready for producer handoff only after checking `source_count`,
+`changelog_count`, and the actual `copy.yaml` `releases[]` count. In a
+single-product flow, `--releases 4` should yield exactly four release sections.
+If counts are abnormal or versions repeat, rerun with an explicit product
+changelog, for example `--changelog packages/kobe/CHANGELOG.md`, and do not pass
+the polluted `producer-context.json` to the image producer.
+
+Real release images must be PNG, JPEG, or WebP files emitted by the configured
+producer. SVG placeholders are not final images. For producer handoff, read the
+target asset's `prompt` and `size` from `producer-context.json`, generate one
+primary candidate such as `release-card` unless the user asked for the full set,
+state the selected producer skill and possible billing before calling it, and
+write the result to `artifacts.scratch/<campaign>/<asset-id>.png`. Use the
+metadata-selected image skill, such as `gpt-image`.
+
+Final responses after release image work must report the real image path,
+dimensions, checksum, and whether it has been accepted. If the PNG/JPEG/WebP is
+still in scratch, say that it has not entered the durable accepted corpus.
+
 ## Verification
 
 After code or workflow changes:
@@ -377,5 +401,5 @@ uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketin
 uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml render --dry-run
 ```
 
-Check that no API key, authorization header, machine-specific path, or raw image
-base64 payload is stored in tracked files.
+Check that no API key, authorization header, machine-specific path, or
+inline-encoded image payload is stored in tracked files.

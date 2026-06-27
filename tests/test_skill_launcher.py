@@ -759,6 +759,105 @@ alias:
     assert "0.7.29" not in release_prompt
 
 
+def test_release_copy_ignores_sandbox_worktree_and_node_modules_changelogs(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path
+    theme = project / "packages/branding/marketing/theme.md"
+    changelog = project / "packages/kobe/CHANGELOG.md"
+    sandbox_changelog = (
+        project
+        / "packages/kobe/.dev-sandbox/home/.kobe/worktrees/retry/packages/kobe/CHANGELOG.md"
+    )
+    node_modules_changelog = project / "packages/kobe/node_modules/kobe/CHANGELOG.md"
+    metadata_path = project / "marketing.harness.json"
+    write_theme(theme)
+    changelog.parent.mkdir(parents=True)
+    sandbox_changelog.parent.mkdir(parents=True)
+    node_modules_changelog.parent.mkdir(parents=True)
+    (project / "package.json").write_text(
+        json.dumps({"name": "test-repo", "private": True, "workspaces": ["packages/*"]}),
+        encoding="utf-8",
+    )
+    (changelog.parent / "package.json").write_text(
+        json.dumps({"name": "kobe", "version": "0.7.43"}),
+        encoding="utf-8",
+    )
+    changelog.write_text(
+        """
+# Changelog
+
+## 0.7.43
+- Latest release row.
+
+## 0.7.42
+- Previous release row.
+
+## 0.7.41
+- Third release row.
+
+## 0.7.40
+- Fourth release row.
+
+## 0.7.39
+- Older release should not be included.
+""".lstrip(),
+        encoding="utf-8",
+    )
+    sandbox_changelog.write_text(changelog.read_text(encoding="utf-8"), encoding="utf-8")
+    node_modules_changelog.write_text(
+        """
+# Changelog
+
+## 9.9.9
+- Polluted dependency release.
+""".lstrip(),
+        encoding="utf-8",
+    )
+    metadata_path.write_text(json.dumps(metadata(project)), encoding="utf-8")
+
+    copy = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "release-copy",
+            "--write",
+            "--releases",
+            "4",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert copy.returncode == 0, copy.stderr
+    assert "source_count=4" in copy.stdout
+    assert "changelog_count=4" in copy.stdout
+    copy_path = project / "packages/branding/.harness/out/release-v0-7-43/copy.yaml"
+    copy_text = copy_path.read_text(encoding="utf-8")
+    assert copy_text.count("    changes:") == 4
+    assert (
+        copy_text.count('  - package: "kobe"\n    version: "0.7.43"\n    changes:')
+        == 1
+    )
+    assert (
+        copy_text.count('  - package: "kobe"\n    version: "0.7.42"\n    changes:')
+        == 1
+    )
+    assert (
+        copy_text.count('  - package: "kobe"\n    version: "0.7.41"\n    changes:')
+        == 1
+    )
+    assert (
+        copy_text.count('  - package: "kobe"\n    version: "0.7.40"\n    changes:')
+        == 1
+    )
+    assert "0.7.39" not in copy_text
+    assert "9.9.9" not in copy_text
+
+
 def test_release_render_rejects_malformed_release_copy_rows(tmp_path: Path) -> None:
     project = tmp_path
     theme = project / "packages/branding/marketing/theme.md"
