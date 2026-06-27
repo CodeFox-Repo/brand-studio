@@ -51,9 +51,13 @@ generation, and scratch candidates are not visual memory.
 
 ## Use
 
-Open a product repo, then mention the skill in the task:
+Open a product repo, then mention the skill in the task. For a new visual
+system, the preferred start is to provide brand images or let the agent scan the
+repo's declared asset roots and create the first Brand Studio files:
 
 ```text
+$brand-studio init this repo from the attached brand images
+$brand-studio init this repo from existing repo assets
 $brand-studio bootstrap this repo for a new product visual system
 $brand-studio validate the CodeFox example campaign
 $brand-studio create a campaign for a launch poster, dry-run first
@@ -61,15 +65,26 @@ $brand-studio render this campaign with the current theme, then wait for review
 $brand-studio record the accepted launch banner into visual asset state
 ```
 
+During image-first init, the agent uses its own image-reading capability to
+derive the initial palette, typography direction, visual language, avoid list,
+and style aliases. If no images are attached, it scans the declared asset roots
+once for image files instead of requiring a separate init-assets path or role
+schema. It writes `marketing.harness.yaml`, `assets/marketing/brief.md`,
+`assets/marketing/theme.md`, a preview campaign, and initial state files, then
+runs the existing launcher for validation and dry-run rendering. The harness
+itself does not analyze images or call vision APIs.
+
 The installed skill contains a launcher:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/harness.py" ...
+python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
+  --metadata marketing.harness.yaml ...
 ```
 
 The launcher keeps paths rooted in the current product repo and runs the bundled
 scripts in the installed skill. It does not call `uvx` or discover a parent
-runtime checkout.
+runtime checkout. YAML metadata requires PyYAML; use `uv run python ...` from
+this checkout or run `uv sync` before invoking the launcher directly.
 
 ## Repo Shape
 
@@ -108,8 +123,15 @@ variants, X/XHS cards, or social images, run the read-only state preflight and
 use that output in the production plan:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.yaml state
+python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
+  --metadata path/to/marketing.harness.yaml state
 ```
+
+After the user accepts exact live candidates, agents may use the internal
+`accept` helper to copy files from scratch into `artifacts.approved`, generate
+an approved manifest from the real file, and update accepted state. The helper
+does not run git commands and is not an asset collection workflow for
+unreviewed files.
 
 Release-version marketing starts with a copy asset. The launcher reads release
 entries from standard `CHANGELOG.md` locations, summarizes them into
@@ -125,7 +147,8 @@ the canonical text asset; it does not write a separate `key_points` block.
 Generate only the text asset when you want to review or revise the wording:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.yaml \
+python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
+  --metadata path/to/marketing.harness.yaml \
   release-copy --write --releases 4
 ```
 
@@ -136,7 +159,8 @@ from the changelog. The resulting `producer-context.json` is the handoff to the
 metadata-selected image producer skill:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/harness.py" --metadata path/to/marketing.harness.yaml \
+python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
+  --metadata path/to/marketing.harness.yaml \
   release-render --releases 4
 ```
 
@@ -172,7 +196,7 @@ exact files or asset ids.
 uv run ruff check .
 uv run pytest
 cd skills/brand-studio/examples/codefox
-uv run python ../../scripts/harness.py --metadata marketing.harness.yaml validate
+uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml validate
 ```
 
 Use the checked-in skill payload directly through a fork, submodule, or local
