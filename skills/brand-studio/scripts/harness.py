@@ -23,6 +23,10 @@ VALUE_FLAGS = {
 DEFAULT_MARKETING_ROOT = "assets/marketing"
 DEFAULT_SCRATCH_DIR = ".harness/marketing/out"
 DEFAULT_APPROVED_DIR = "public/marketing"
+# Fallbacks used only when metadata.brandStandard.* is absent.
+FALLBACK_ORG_BRAND_STANDARD = "public/brand/brand-standard.md"
+FALLBACK_ORG_THEME_BASE = "public/brand/theme.base.md"
+FALLBACK_ORG_REFERENCES = "public/brand/references"
 DEFAULT_RELEASE_STYLE = "launch-hero"
 DEFAULT_RELEASE_DELIVERABLES = [
     ("release-card", (1200, 640)),
@@ -76,55 +80,133 @@ def main() -> int:
             Path(project_root_value).expanduser().resolve()
         )
 
-    if args[:1] == ["plan"]:
+    if not args or args[0] in {"-h", "--help"}:
+        print_harness_help()
+        return 0
+
+    if args[0] == "org":
+        return org_command(args[1:], metadata, metadata_path)
+    if args[0] == "repo":
+        return repo_command(args[1:], metadata, metadata_path)
+
+    print(
+        f"unknown command: {args[0]}; use `repo ...` or `org ...`",
+        file=sys.stderr,
+    )
+    return 2
+
+
+def bundled_cli_command() -> list[str]:
+    return [sys.executable, str(Path(__file__).resolve().parent / "cli.py")]
+
+
+def print_harness_help() -> None:
+    print(
+        """
+usage: harness.py [--project-root DIR] [--metadata FILE] <command> [options]
+
+Canonical Brand Studio commands:
+  org init [--write] [target-dir]
+  repo init [--write] [--with-example] [target-dir]
+  repo paths
+  repo check
+  repo state [--compact] [target-dir]
+  repo validate
+  repo render --dry-run
+  repo release copy [--write] [--releases N]
+  repo release campaign [--write]
+  repo gen release [--changelog FILE] [--releases N]
+  repo handoff --campaign NAME --asset-id ID
+  repo settle --campaign NAME --asset-id ID --file FILE [--checksum-sha256 SHA256]
+  repo report --file FILE
+  repo delete candidate --file FILE
+""".strip()
+    )
+
+
+def org_command(
+    args: list[str],
+    metadata: dict[str, Any],
+    metadata_path: str | None,
+) -> int:
+    if not args or args[0] in {"-h", "--help"}:
+        print("usage: harness.py org init [--write] [target-dir]")
+        return 0
+    if args[0] == "init":
+        return org_init(args[1:], metadata, metadata_path)
+    print(f"unknown org command: {' '.join(args)}", file=sys.stderr)
+    return 2
+
+
+def repo_command(
+    args: list[str],
+    metadata: dict[str, Any],
+    metadata_path: str | None,
+) -> int:
+    if not args or args[0] in {"-h", "--help"}:
+        print(
+            "usage: harness.py repo "
+            "{init,paths,check,state,validate,render,release,gen,handoff,settle,report,delete} ..."
+        )
+        return 0
+    command_name = args[0]
+    rest = args[1:]
+    if command_name == "init":
+        return bootstrap_project(rest, metadata, metadata_path)
+    if command_name == "paths":
         print_plan(metadata)
         return 0
+    if command_name == "check":
+        return check_project(rest, metadata, metadata_path)
+    if command_name == "state":
+        return print_state(rest, metadata, metadata_path)
+    if command_name in {"validate", "render"}:
+        return run_repo_render_command([command_name, *rest], metadata)
+    if command_name == "release":
+        return repo_release_command(rest, metadata, metadata_path)
+    if command_name == "gen" and rest[:1] == ["release"]:
+        return release_render(rest[1:], metadata, metadata_path)
+    if command_name == "handoff":
+        return producer_handoff(rest, metadata, metadata_path)
+    if command_name == "settle":
+        return accept_asset(rest, metadata, metadata_path)
+    if command_name == "report":
+        return asset_report(rest, metadata, metadata_path)
+    if command_name == "delete" and rest[:1] == ["candidate"]:
+        return delete_candidate(rest[1:], metadata, metadata_path)
+    print(f"unknown repo command: {' '.join(args)}", file=sys.stderr)
+    return 2
 
-    if args[:1] == ["state"]:
-        return print_state(args[1:], metadata, metadata_path)
 
-    if args[:1] == ["check"]:
-        return check_project(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["bootstrap"]:
-        return bootstrap_project(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["accept"]:
-        return accept_asset(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["asset-report"]:
-        return asset_report(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["producer-handoff"]:
-        return producer_handoff(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["release-campaign"]:
-        return release_campaign(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["release-copy"]:
-        return release_copy(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["release-render"]:
-        return release_render(args[1:], metadata, metadata_path)
-
-    if args[:1] == ["--resolve"]:
-        resolution = bundled_cli_command()
-        print(" ".join(shell_quote(part) for part in resolution))
+def repo_release_command(
+    args: list[str],
+    metadata: dict[str, Any],
+    metadata_path: str | None,
+) -> int:
+    if not args or args[0] in {"-h", "--help"}:
+        print("usage: harness.py repo release {copy,campaign,render} ...")
         return 0
+    command_name = args[0]
+    rest = args[1:]
+    if command_name == "copy":
+        return release_copy(rest, metadata, metadata_path)
+    if command_name == "campaign":
+        return release_campaign(rest, metadata, metadata_path)
+    if command_name == "render":
+        return release_render(rest, metadata, metadata_path)
+    print(f"unknown repo release command: {' '.join(args)}", file=sys.stderr)
+    return 2
 
+
+def run_repo_render_command(args: list[str], metadata: dict[str, Any]) -> int:
     command_args = apply_metadata_args(args, metadata)
     constraint_errors = producer_constraint_errors(command_args, metadata)
     if constraint_errors:
         for error in constraint_errors:
             print(error, file=sys.stderr)
         return 1
-    command = bundled_cli_command()
-    completed = subprocess.run([*command, *command_args], check=False)
+    completed = subprocess.run([*bundled_cli_command(), *command_args], check=False)
     return completed.returncode
-
-
-def bundled_cli_command() -> list[str]:
-    return [sys.executable, str(Path(__file__).resolve().parent / "cli.py")]
 
 
 def apply_metadata_args(args: list[str], metadata: dict[str, Any]) -> list[str]:
@@ -164,12 +246,12 @@ def bootstrap_project(args: list[str], metadata: dict[str, Any], metadata_path: 
             with_example = True
         elif token in {"-h", "--help"}:
             print(
-                "usage: harness.py bootstrap [--metadata FILE] "
+                "usage: harness.py repo init "
                 "[--write] [--with-example] [target-dir]"
             )
             return 0
         elif token.startswith("-"):
-            raise SystemExit(f"unknown bootstrap option: {token}")
+            raise SystemExit(f"unknown repo init option: {token}")
         else:
             target = token
 
@@ -219,9 +301,133 @@ def bootstrap_project(args: list[str], metadata: dict[str, Any], metadata_path: 
     return 0
 
 
+def org_init(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
+    write = False
+    target = "."
+    remaining = list(args)
+    while remaining:
+        token = remaining.pop(0)
+        if token == "--write":
+            write = True
+        elif token == "--dry-run":
+            write = False
+        elif token in {"-h", "--help"}:
+            print("usage: harness.py org init [--write] [target-dir]")
+            return 0
+        elif token.startswith("-"):
+            raise SystemExit(f"unknown org init option: {token}")
+        else:
+            target = token
+
+    project_root = project_root_for(metadata, fallback=Path(target).resolve())
+    paths = org_brand_paths(metadata, project_root)
+    created: list[Path] = []
+    existing: list[Path] = []
+
+    if write:
+        if paths["references"].exists():
+            existing.append(paths["references"])
+        else:
+            created.append(paths["references"])
+        paths["references"].mkdir(parents=True, exist_ok=True)
+        for key, content in (
+            ("brand_standard", org_brand_standard_template(project_root)),
+            ("theme_base", org_theme_base_template(project_root)),
+        ):
+            path = paths[key]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                existing.append(path)
+                continue
+            path.write_text(content, encoding="utf-8")
+            created.append(path)
+    else:
+        existing = [path for path in paths.values() if path.exists()]
+
+    print_kv(
+        {
+            "mode": "write" if write else "dry-run",
+            "scope": "org",
+            "metadata": metadata_path or "",
+            "project_root": project_root,
+            "brand_standard": paths["brand_standard"],
+            "theme_base": paths["theme_base"],
+            "references": paths["references"],
+            "created": " ".join(str(path) for path in unique_paths(created)) if write else "",
+            "existing": " ".join(str(path) for path in unique_paths(existing)),
+            "next": (
+                "add references, then update brand-standard.md and "
+                "theme.base.md with agent-reviewed brand direction"
+            ),
+        }
+    )
+    if not write:
+        print("dry_run_note=pass --write to create missing org brand files")
+    return 0
+
+
+def delete_candidate(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
+    usage = "usage: harness.py repo delete candidate --file FILE"
+    file_value: str | None = None
+    remaining = list(args)
+    while remaining:
+        token = remaining.pop(0)
+        if token == "--file":
+            if not remaining:
+                print("--file requires a value", file=sys.stderr)
+                return 1
+            file_value = remaining.pop(0)
+        elif token.startswith("--file="):
+            file_value = token.split("=", 1)[1]
+        elif token in {"-h", "--help"}:
+            print(usage)
+            return 0
+        elif token.startswith("-"):
+            print(f"unknown delete candidate option: {token}", file=sys.stderr)
+            return 1
+        else:
+            print(f"unexpected delete candidate argument: {token}", file=sys.stderr)
+            return 1
+    if not file_value:
+        print("delete candidate requires --file", file=sys.stderr)
+        return 1
+
+    project_root = project_root_for(metadata)
+    paths = project_paths(metadata, project_root)
+    candidate = Path(resolve_project_path(project_root, file_value))
+    scratch_dir = paths["scratch_dir"].resolve()
+    try:
+        candidate.resolve().relative_to(scratch_dir)
+    except ValueError:
+        print(
+            f"{candidate}: delete candidate file must be under artifacts.scratch "
+            f"({scratch_dir})",
+            file=sys.stderr,
+        )
+        return 1
+    if not candidate.is_file():
+        print(f"{candidate}: candidate file not found", file=sys.stderr)
+        return 1
+
+    checksum = checksum_path(candidate)
+    candidate.unlink()
+    print_kv(
+        {
+            "mode": "delete-candidate",
+            "metadata": metadata_path or "",
+            "project_root": project_root,
+            "file": candidate,
+            "scratch_dir": scratch_dir,
+            "deleted": "true",
+            "checksum_sha256": checksum,
+        }
+    )
+    return 0
+
+
 def accept_asset(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py accept --metadata FILE --campaign NAME --asset-id ID "
+        "usage: harness.py repo settle --campaign NAME --asset-id ID "
         "--file FILE [--checksum-sha256 SHA256] [--notes TEXT] [--tags a,b] "
         "[--plan FILE] [--update-asset-state]"
     )
@@ -321,7 +527,7 @@ def accept_asset(args: list[str], metadata: dict[str, Any], metadata_path: str |
 
     print_kv(
         {
-            "mode": "accept",
+            "mode": "settle",
             "metadata": metadata_path or "",
             "project_root": project_root,
             "campaign": campaign,
@@ -342,7 +548,7 @@ def accept_asset(args: list[str], metadata: dict[str, Any], metadata_path: str |
 
 def asset_report(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py asset-report --metadata FILE --file FILE "
+        "usage: harness.py repo report --file FILE "
         "[--campaign NAME] [--asset-id ID]"
     )
     options = parse_asset_report_options(args, usage)
@@ -376,7 +582,7 @@ def asset_report(args: list[str], metadata: dict[str, Any], metadata_path: str |
 
 def producer_handoff(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py producer-handoff --metadata FILE --campaign NAME "
+        "usage: harness.py repo handoff --campaign NAME "
         "--asset-id ID [--context FILE]"
     )
     options = parse_producer_handoff_options(args, usage)
@@ -443,7 +649,7 @@ def producer_handoff(args: list[str], metadata: dict[str, Any], metadata_path: s
 
     print_kv(
         {
-            "mode": "producer-handoff",
+            "mode": "handoff",
             "metadata": metadata_path or "",
             "project_root": project_root,
             "campaign": campaign,
@@ -506,12 +712,12 @@ def parse_accept_options(args: list[str], usage: str) -> dict[str, Any] | str:
         if matched:
             continue
         if token.startswith("-"):
-            return f"unknown accept option: {token}"
+            return f"unknown repo settle option: {token}"
         return usage
 
     for key in ("campaign", "asset_id", "file"):
         if not options[key]:
-            return f"accept requires --{key.replace('_', '-')}"
+            return f"repo settle requires --{key.replace('_', '-')}"
     if options["checksum_sha256"] and not re.fullmatch(
         r"[0-9a-fA-F]{64}", options["checksum_sha256"]
     ):
@@ -523,7 +729,7 @@ def parse_asset_report_options(args: list[str], usage: str) -> dict[str, Any] | 
     return parse_value_options(
         args,
         usage=usage,
-        command_name="asset-report",
+        command_name="repo report",
         value_options={
             "--file": "file",
             "--campaign": "campaign",
@@ -538,7 +744,7 @@ def parse_producer_handoff_options(args: list[str], usage: str) -> dict[str, Any
     return parse_value_options(
         args,
         usage=usage,
-        command_name="producer-handoff",
+        command_name="repo handoff",
         value_options={
             "--campaign": "campaign",
             "--asset-id": "asset_id",
@@ -616,7 +822,7 @@ def build_asset_report(
     )
     asset_id = asset_id_hint or string_from_mapping(accepted_entry, "asset_id") or file_path.stem
     return {
-        "mode": "asset-report",
+        "mode": "report",
         "metadata": metadata_path or "",
         "project_root": project_root,
         "file": file_path,
@@ -758,7 +964,7 @@ def single_line(value: str) -> str:
 
 def release_campaign(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py release-campaign [--metadata FILE] "
+        "usage: harness.py repo release campaign "
         "[--write] [--force] [--version VERSION] [--name NAME] "
         "[--releases COUNT] [--style STYLE] [--headline TEXT] [--changelog FILE] "
         "[--copy FILE] [--campaign FILE] [target-dir]"
@@ -767,7 +973,7 @@ def release_campaign(args: list[str], metadata: dict[str, Any], metadata_path: s
         args,
         usage=usage,
         allow_write=True,
-        command_name="release-campaign",
+        command_name="repo release campaign",
     )
     plan = build_release_campaign_plan(metadata, options)
     if isinstance(plan, str):
@@ -799,7 +1005,7 @@ def release_campaign(args: list[str], metadata: dict[str, Any], metadata_path: s
 
 def release_copy(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py release-copy [--metadata FILE] "
+        "usage: harness.py repo release copy "
         "[--write] [--force] [--version VERSION] [--name NAME] "
         "[--releases COUNT] [--headline TEXT] [--changelog FILE] "
         "[--copy FILE] [target-dir]"
@@ -808,7 +1014,7 @@ def release_copy(args: list[str], metadata: dict[str, Any], metadata_path: str |
         args,
         usage=usage,
         allow_write=True,
-        command_name="release-copy",
+        command_name="repo release copy",
     )
     plan = build_release_copy_plan(metadata, options)
     if isinstance(plan, str):
@@ -840,7 +1046,7 @@ def release_copy(args: list[str], metadata: dict[str, Any], metadata_path: str |
 
 def release_render(args: list[str], metadata: dict[str, Any], metadata_path: str | None) -> int:
     usage = (
-        "usage: harness.py release-render [--metadata FILE] "
+        "usage: harness.py repo gen release "
         "[--force] [--version VERSION] [--name NAME] [--releases COUNT] [--style STYLE] "
         "[--headline TEXT] [--changelog FILE] [--copy FILE] "
         "[--campaign FILE] [target-dir]"
@@ -849,7 +1055,7 @@ def release_render(args: list[str], metadata: dict[str, Any], metadata_path: str
         args,
         usage=usage,
         allow_write=False,
-        command_name="release-render",
+        command_name="repo gen release",
     )
     plan = build_release_campaign_plan(metadata, options)
     if isinstance(plan, str):
@@ -893,7 +1099,7 @@ def release_render(args: list[str], metadata: dict[str, Any], metadata_path: str
     print_release_summary(
         plan,
         metadata_path=metadata_path,
-        mode="render",
+        mode="gen-release",
         campaign_status=write_result["status"],
         copy_status=copy_result["status"],
         producer_context_path=Path(str(producer_context_result["path"])),
@@ -2143,10 +2349,10 @@ def print_state(args: list[str], metadata: dict[str, Any], metadata_path: str | 
         if token == "--compact":
             pretty = False
         elif token in {"-h", "--help"}:
-            print("usage: harness.py state [--metadata FILE] [--compact] [target-dir]")
+            print("usage: harness.py repo state [--compact] [target-dir]")
             return 0
         elif token.startswith("-"):
-            raise SystemExit(f"unknown state option: {token}")
+            raise SystemExit(f"unknown repo state option: {token}")
         else:
             target = token
 
@@ -2200,6 +2406,32 @@ def project_paths(metadata: dict[str, Any], project_root: Path) -> dict[str, Pat
         "accepted_state": accepted_state,
         "campaigns_dir": campaigns_dir,
         "references_dir": references_dir,
+    }
+
+
+def org_brand_paths(metadata: dict[str, Any], project_root: Path) -> dict[str, Path]:
+    return {
+        "brand_standard": path_at(
+            metadata,
+            project_root,
+            FALLBACK_ORG_BRAND_STANDARD,
+            "brandStandard",
+            "path",
+        ),
+        "theme_base": path_at(
+            metadata,
+            project_root,
+            FALLBACK_ORG_THEME_BASE,
+            "brandStandard",
+            "themeBase",
+        ),
+        "references": path_at(
+            metadata,
+            project_root,
+            FALLBACK_ORG_REFERENCES,
+            "brandStandard",
+            "references",
+        ),
     }
 
 
@@ -2798,6 +3030,51 @@ def copy_example(marketing_root: Path) -> None:
         return
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(example, target)
+
+
+def org_brand_standard_template(project_root: Path) -> str:
+    org_id = slugify(project_root.name, "org")
+    return f"""# {org_id} Brand Standard
+
+## Source Inputs
+
+- Add logos, screenshots, decks, website captures, and marketing references
+  under `public/brand/references/`.
+
+## Positioning
+
+Describe the organization's positioning, audience, and product adaptation
+rules after reviewing source inputs.
+
+## Visual Language
+
+Describe palette, typography direction, composition rules, materials, lighting,
+motion cues, and avoid-list decisions after review.
+
+## Voice
+
+Describe tone, messaging constraints, and do/don't guidance.
+"""
+
+
+def org_theme_base_template(project_root: Path) -> str:
+    org_id = slugify(project_root.name, "org")
+    return f"""---
+organization:
+  id: {yaml_string(org_id)}
+version: 1.0.0
+global:
+  color: {{}}
+  typography: {{}}
+alias:
+  style: {{}}
+---
+
+# {org_id} Base Theme
+
+Machine-readable base style lock for product repos. Fill this after reviewing
+the org brand references.
+"""
 
 
 def load_metadata(path: str | None, project_root: str | None = None) -> dict[str, Any]:

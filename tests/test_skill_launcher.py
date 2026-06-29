@@ -164,7 +164,8 @@ campaign:
             str(project),
             "--metadata",
             str(metadata_path),
-            "plan",
+            "repo",
+            "paths",
         ],
         cwd=other_cwd,
         text=True,
@@ -190,7 +191,8 @@ def test_project_root_option_applies_without_metadata(tmp_path: Path) -> None:
             str(SCRIPT_PATH),
             "--project-root",
             str(project),
-            "plan",
+            "repo",
+            "paths",
         ],
         cwd=other_cwd,
         text=True,
@@ -268,6 +270,306 @@ def test_bootstrap_is_dry_run_until_write(
     assert accepted_parent.is_dir()
     assert scratch.is_dir()
     assert "mode=write" in capsys.readouterr().out
+
+
+def test_consolidated_help_shows_repo_and_org_commands() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), "--help"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert "repo init" in completed.stdout
+    assert "repo gen release" in completed.stdout
+    assert "repo settle" in completed.stdout
+    assert "repo delete candidate" in completed.stdout
+    assert "org init" in completed.stdout
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "plan",
+        "check",
+        "bootstrap",
+        "state",
+        "validate",
+        "render",
+        "release-copy",
+        "release-campaign",
+        "release-render",
+        "producer-handoff",
+        "accept",
+        "asset-report",
+    ],
+)
+def test_legacy_top_level_commands_are_not_public(command: str) -> None:
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT_PATH), command],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode != 0
+    assert "use `repo ...` or `org ...`" in completed.stderr
+
+
+def test_repo_and_org_commands_dispatch_to_existing_helpers() -> None:
+    launcher = load_launcher()
+
+    assert launcher.repo_command(["state"], {}, None) == 0
+
+
+def test_repo_init_wraps_bootstrap(tmp_path: Path) -> None:
+    project = tmp_path / "product"
+    metadata_path = project / "marketing.harness.json"
+    project.mkdir()
+    metadata_path.write_text(json.dumps(metadata(project)), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "repo",
+            "init",
+            "--write",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "mode=write" in completed.stdout
+    assert "packages/branding/marketing" in completed.stdout
+    assert (project / "packages/branding/marketing").is_dir()
+
+
+def test_check_harness_wrapper_uses_repo_check_with_project_python() -> None:
+    example = ROOT / "skills/brand-studio/examples/codefox"
+    completed = subprocess.run(
+        [
+            str(ROOT / "skills/brand-studio/scripts/check_harness.sh"),
+            "--project-root",
+            str(example),
+            "--metadata",
+            str(example / "marketing.harness.yaml"),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "launcher_ready=True" in completed.stdout
+
+
+def test_repo_gen_release_wraps_release_render(tmp_path: Path) -> None:
+    project = tmp_path
+    theme = project / "packages/branding/marketing/theme.md"
+    changelog = project / "packages/kobe/CHANGELOG.md"
+    metadata_path = project / "marketing.harness.json"
+    write_theme(theme)
+    changelog.parent.mkdir(parents=True)
+    changelog.write_text(
+        """
+# Changelog
+
+## 0.7.43
+
+- Release workflow now has one command surface.
+""".lstrip(),
+        encoding="utf-8",
+    )
+    metadata_path.write_text(json.dumps(metadata(project)), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "repo",
+            "gen",
+            "release",
+            "--changelog",
+            str(changelog),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "mode=gen-release" in completed.stdout
+    assert "release_source=changelog" in completed.stdout
+    producer_context = (
+        project / "packages/branding/.harness/out/release-v0-7-43/producer-context.json"
+    )
+    assert producer_context.is_file()
+
+
+def test_repo_settle_wraps_accept_helper(tmp_path: Path) -> None:
+    project = tmp_path
+    metadata_path = project / "marketing.harness.json"
+    candidate = project / ".harness/marketing/out/launch/web-banner.png"
+    write_png(candidate, width=320, height=176)
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "project": {"id": "kobe", "root": str(project)},
+                "artifacts": {
+                    "scratch": ".harness/marketing/out",
+                    "approved": "public/marketing",
+                },
+                "state": {"accepted": "assets/marketing/accepted.yaml"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    checksum = file_sha256(candidate)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "repo",
+            "settle",
+            "--campaign",
+            "launch",
+            "--asset-id",
+            "web-banner",
+            "--file",
+            str(candidate),
+            "--checksum-sha256",
+            checksum,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "mode=settle" in completed.stdout
+    assert "accepted=true" in completed.stdout
+    assert (project / "public/marketing/launch/web-banner.png").is_file()
+
+
+def test_repo_delete_candidate_only_deletes_scratch_files(tmp_path: Path) -> None:
+    project = tmp_path
+    metadata_path = project / "marketing.harness.json"
+    candidate = project / ".harness/marketing/out/launch/web-banner.png"
+    approved = project / "public/marketing/launch/web-banner.png"
+    write_png(candidate, width=320, height=176)
+    write_png(approved, width=320, height=176)
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "project": {"id": "kobe", "root": str(project)},
+                "artifacts": {
+                    "scratch": ".harness/marketing/out",
+                    "approved": "public/marketing",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    deleted = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "repo",
+            "delete",
+            "candidate",
+            "--file",
+            str(candidate),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    rejected = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--metadata",
+            str(metadata_path),
+            "repo",
+            "delete",
+            "candidate",
+            "--file",
+            str(approved),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert deleted.returncode == 0, deleted.stderr
+    assert "mode=delete-candidate" in deleted.stdout
+    assert "deleted=true" in deleted.stdout
+    assert not candidate.exists()
+    assert rejected.returncode == 1
+    assert "must be under artifacts.scratch" in rejected.stderr
+    assert approved.is_file()
+
+
+def test_org_init_is_dry_run_and_write_does_not_overwrite(tmp_path: Path) -> None:
+    project = tmp_path / "org-brand"
+    project.mkdir()
+    existing_standard = project / "public/brand/brand-standard.md"
+    existing_standard.parent.mkdir(parents=True)
+    existing_standard.write_text("# Existing Standard\n", encoding="utf-8")
+
+    dry_run = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--project-root",
+            str(project),
+            "org",
+            "init",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert dry_run.returncode == 0, dry_run.stderr
+    assert "mode=dry-run" in dry_run.stdout
+    assert "scope=org" in dry_run.stdout
+    assert not (project / "public/brand/theme.base.md").exists()
+
+    write = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--project-root",
+            str(project),
+            "org",
+            "init",
+            "--write",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert write.returncode == 0, write.stderr
+    assert "mode=write" in write.stdout
+    assert existing_standard.read_text(encoding="utf-8") == "# Existing Standard\n"
+    assert (project / "public/brand/theme.base.md").is_file()
+    assert (project / "public/brand/references").is_dir()
 
 
 def test_publish_is_not_a_user_facing_command() -> None:
@@ -452,6 +754,7 @@ deliverables:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
+            "repo",
             "render",
             "--dry-run",
         ],
@@ -547,7 +850,9 @@ alias:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-copy",
+            "repo",
+            "release",
+            "copy",
             "--write",
         ],
         text=True,
@@ -593,7 +898,9 @@ alias:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-render",
+            "repo",
+            "gen",
+            "release",
         ],
         text=True,
         capture_output=True,
@@ -733,7 +1040,9 @@ alias:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-copy",
+            "repo",
+            "release",
+            "copy",
             "--write",
             "--releases",
             "4",
@@ -764,7 +1073,9 @@ alias:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-render",
+            "repo",
+            "gen",
+            "release",
             "--force",
             "--releases",
             "4",
@@ -852,7 +1163,9 @@ def test_release_copy_ignores_sandbox_worktree_and_node_modules_changelogs(
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-copy",
+            "repo",
+            "release",
+            "copy",
             "--write",
             "--releases",
             "4",
@@ -960,7 +1273,9 @@ sources: []
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "release-render",
+            "repo",
+            "gen",
+            "release",
             "--copy",
             str(copy_path),
         ],
@@ -1020,6 +1335,7 @@ deliverables:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
+            "repo",
             "validate",
         ],
         text=True,
@@ -1081,7 +1397,8 @@ def test_producer_handoff_reports_target_prompt_and_not_generated(tmp_path: Path
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "producer-handoff",
+            "repo",
+            "handoff",
             "--campaign",
             "release-v0-7-43",
             "--asset-id",
@@ -1093,7 +1410,7 @@ def test_producer_handoff_reports_target_prompt_and_not_generated(tmp_path: Path
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "mode=producer-handoff" in completed.stdout
+    assert "mode=handoff" in completed.stdout
     assert "producer_skill=gpt-image" in completed.stdout
     assert "asset_id=release-card" in completed.stdout
     assert "size=1200x640" in completed.stdout
@@ -1131,7 +1448,8 @@ def test_asset_report_reports_scratch_file_metadata(tmp_path: Path) -> None:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "asset-report",
+            "repo",
+            "report",
             "--file",
             str(candidate),
         ],
@@ -1141,7 +1459,7 @@ def test_asset_report_reports_scratch_file_metadata(tmp_path: Path) -> None:
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "mode=asset-report" in completed.stdout
+    assert "mode=report" in completed.stdout
     assert f"file={candidate}" in completed.stdout
     assert "corpus=scratch" in completed.stdout
     assert "accepted=false" in completed.stdout
@@ -1189,7 +1507,8 @@ accepted:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "asset-report",
+            "repo",
+            "report",
             "--file",
             str(approved),
         ],
@@ -1256,7 +1575,8 @@ def test_accept_helper_copies_candidate_and_updates_manifest_and_state(tmp_path:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "accept",
+            "repo",
+            "settle",
             "--campaign",
             "launch",
             "--asset-id",
@@ -1335,7 +1655,8 @@ def test_accept_helper_rejects_checksum_mismatch(tmp_path: Path) -> None:
             str(SCRIPT_PATH),
             "--metadata",
             str(metadata_path),
-            "accept",
+            "repo",
+            "settle",
             "--campaign",
             "launch",
             "--asset-id",

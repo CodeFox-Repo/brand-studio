@@ -5,8 +5,19 @@ Agents may use bundled scripts as private helpers, but the user-facing workflow
 is always:
 
 ```text
-plan -> produce candidates -> user accepts exact candidates -> record state -> next production
+init org/repo -> generate repo candidates -> user accepts exact candidates -> settle repo assets -> next production
 ```
+
+Before acting, classify the request into one stage:
+
+- `init-org`, `update-org`, `retire-org`
+- `init-repo`, `gen-repo`, `settle-repo`
+- `update-repo`, `delete-repo`, `retire-repo`
+
+Agents handle interpretation, image understanding, prompt writing, and proposal
+drafting. Helpers handle deterministic paths, validation, manifests, checksums,
+state updates, and destructive operations. If a request spans stages, stop at
+the earliest safe stage unless the user has clearly accepted the next step.
 
 ## State Sources
 
@@ -33,7 +44,7 @@ Run the bundled state preflight before writing a production plan. Use
 
 ```bash
 python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
-  --metadata path/to/marketing.harness.yaml state
+  --metadata path/to/marketing.harness.yaml repo state
 ```
 
 Use the JSON as a read summary of the current org, repo, directory,
@@ -63,6 +74,8 @@ assets/marketing/plans/<campaign>.plan.yaml
 Plans are source state. They are not generated image artifacts.
 
 ## Production
+
+This section is the `gen-repo` stage.
 
 Validate inputs and run a dry render first. Before live generation, ask the user
 to approve API usage and cost unless the user directly requested live generation
@@ -94,6 +107,8 @@ Review candidates for:
 
 ## Acceptance
 
+This section is the `settle-repo` stage.
+
 Ask the user to identify exactly which candidate files are accepted. Acceptance
 must name concrete files or asset ids from the current render. In a
 single-candidate context, phrases such as "this is good", "no changes", or "use
@@ -115,7 +130,7 @@ Agents should use the internal helper after acceptance:
 
 ```bash
 python3 "$SKILL_ROOT/scripts/harness.py" --project-root "$PWD" \
-  --metadata marketing.harness.yaml accept \
+  --metadata marketing.harness.yaml repo settle \
   --campaign launch \
   --asset-id web-banner \
   --file .harness/marketing/out/launch/web-banner.png \
@@ -129,6 +144,27 @@ and never runs git commands.
 
 Rejected or unreviewed candidates stay in scratch and should not feed future
 planning.
+
+## Update and Removal
+
+Use `update-repo theme` for theme changes: draft a proposal, validate it,
+dry-render a representative campaign, then ask before promoting it to
+`theme.path`.
+
+Use `update-repo asset` for asset replacement: generate a new scratch
+candidate, get user acceptance, then settle it as a new approved asset or
+revision. Do not overwrite an approved file in place.
+
+Use `delete-repo candidate` only for scratch files under `artifacts.scratch`
+after path resolution under `--project-root`.
+
+Use `retire-repo asset` for approved assets. Mark state inactive or superseded
+and keep the file by default. A physical purge requires explicit approval plus a
+repo reference search for the approved file path.
+
+For organization standards, prefer `update-org` and `retire-org` over deletion:
+patch `public/brand/brand-standard.md`, `theme.base.md`, or references
+deliberately, and record deprecations before removing shared files.
 
 ## Accepted Corpus Shape
 
