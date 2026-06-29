@@ -200,7 +200,7 @@ exact files or asset ids.
 uv run ruff check .
 uv run pytest
 cd skills/brand-studio/examples/codefox
-uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml validate
+uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml repo validate
 ```
 
 Use the checked-in skill payload directly through a fork, submodule, or local

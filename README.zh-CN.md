@@ -243,7 +243,7 @@ uv sync
 uv run ruff check .
 uv run pytest
 cd skills/brand-studio/examples/codefox
-uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml validate
+uv run python ../../scripts/harness.py --project-root "$PWD" --metadata marketing.harness.yaml repo validate
 ```
 
 skill payload 形态靠人工 review 维护：保持 `SKILL.md`、`scripts/`、
