@@ -25,7 +25,8 @@ Start each task by reading the product repo's metadata and state files:
 
 - organization metadata and `theme.md` declared by the metadata file.
 - `theme.md`: frozen repo visual style in YAML frontmatter plus design notes in Markdown.
-- `campaigns/`: campaign inputs.
+- `campaigns.release`: release-note and changelog campaign inputs.
+- `campaigns.promo`: normal campaign-first promotional campaign inputs.
 - `references/`: local reference assets.
 - `asset-state.yaml`: directory-level memory under declared asset roots.
 - root `accepted.yaml`: transitional aggregate index.

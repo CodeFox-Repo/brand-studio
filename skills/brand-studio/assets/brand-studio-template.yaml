@@ -22,8 +22,11 @@ brandStandard:
 
 theme:
   path: assets/marketing/theme.md
-  campaigns: assets/marketing/campaigns
   references: assets/marketing/references
+
+campaigns:
+  release: assets/marketing/campaigns/release
+  promo: assets/marketing/campaigns/promo
 
 skills:
   # Bind each capability to a locally installed producer skill (by name).
@@ -36,7 +39,7 @@ skills:
 
 campaign:
   name: launch
-  path: assets/marketing/campaigns/launch.campaign.yaml
+  path: assets/marketing/campaigns/promo/launch.campaign.yaml
 
 artifacts:
   scratch: .harness/marketing/out

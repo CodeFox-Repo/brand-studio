@@ -260,7 +260,9 @@ def bootstrap_project(args: list[str], metadata: dict[str, Any], metadata_path: 
     plan = project_paths(metadata, project_root)
     dirs = [
         plan["marketing_root"],
+        plan["campaigns_root"],
         plan["campaigns_dir"],
+        *plan["campaign_dirs"].values(),
         plan["references_dir"],
         plan["plans_dir"],
         plan["asset_index"].parent,
@@ -291,7 +293,10 @@ def bootstrap_project(args: list[str], metadata: dict[str, Any], metadata_path: 
             "metadata": metadata_path or "",
             "project_root": project_root,
             "marketing_root": plan["marketing_root"],
+            "campaigns_root": plan["campaigns_root"],
             "campaigns_dir": plan["campaigns_dir"],
+            "release_campaigns_dir": plan["campaign_dirs"]["release"],
+            "promo_campaigns_dir": plan["campaign_dirs"]["promo"],
             "references_dir": plan["references_dir"],
             "plans_dir": plan["plans_dir"],
             "asset_index": plan["asset_index"],
@@ -1441,7 +1446,8 @@ def build_release_campaign_plan(
     campaign_path = (
         Path(resolve_project_path(project_root, options["campaign_path_value"]))
         if options["campaign_path_value"]
-        else paths["campaigns_dir"] / f"{copy_plan['campaign_name']}.campaign.yaml"
+        else paths["campaign_dirs"]["release"]
+        / f"{copy_plan['campaign_name']}.campaign.yaml"
     )
     campaign_yaml = build_release_campaign_yaml(
         name=str(copy_plan["campaign_name"]),
@@ -2499,7 +2505,10 @@ def print_plan(metadata: dict[str, Any]) -> None:
         {
             "project_root": project_root,
             "marketing_root": paths["marketing_root"],
+            "campaigns_root": paths["campaigns_root"],
             "campaigns_dir": paths["campaigns_dir"],
+            "release_campaigns_dir": paths["campaign_dirs"]["release"],
+            "promo_campaigns_dir": paths["campaign_dirs"]["promo"],
             "references_dir": paths["references_dir"],
             "plans_dir": paths["plans_dir"],
             "asset_index": paths["asset_index"],
@@ -2560,13 +2569,17 @@ def project_paths(metadata: dict[str, Any], project_root: Path) -> dict[str, Any
         "accepted",
     )
     directory_state_file = string_at(metadata, "state", "directoryStateFile") or "asset-state.yaml"
-    campaigns_value = theme_metadata_path_value(metadata, "campaigns")
     references_value = theme_metadata_path_value(metadata, "references")
-    campaigns_dir = (
-        Path(resolve_project_path(project_root, campaigns_value))
-        if campaigns_value
-        else marketing_root / "campaigns"
+    legacy_campaigns_value = theme_metadata_path_value(metadata, "campaigns")
+    campaigns_root = campaign_root_path(
+        metadata,
+        project_root,
+        Path(resolve_project_path(project_root, legacy_campaigns_value))
+        if legacy_campaigns_value
+        else marketing_root / "campaigns",
     )
+    campaign_dirs = campaign_domain_paths(metadata, project_root, campaigns_root)
+    campaigns_dir = campaign_dirs["promo"]
     references_dir = (
         Path(resolve_project_path(project_root, references_value))
         if references_value
@@ -2575,6 +2588,7 @@ def project_paths(metadata: dict[str, Any], project_root: Path) -> dict[str, Any
     portfolios = portfolio_paths(metadata, project_root, marketing_root)
     return {
         "marketing_root": marketing_root,
+        "campaigns_root": campaigns_root,
         "scratch_dir": scratch_dir,
         "approved_dir": approved_dir,
         "plans_dir": plans_dir,
@@ -2582,8 +2596,45 @@ def project_paths(metadata: dict[str, Any], project_root: Path) -> dict[str, Any
         "directory_state_file": directory_state_file,
         "accepted_state": accepted_state,
         "campaigns_dir": campaigns_dir,
+        "campaign_dirs": campaign_dirs,
         "references_dir": references_dir,
         "portfolios": portfolios,
+    }
+
+
+def campaign_root_path(
+    metadata: dict[str, Any],
+    project_root: Path,
+    default: Path,
+) -> Path:
+    root_value = metadata_path_value(metadata, "campaigns", "root")
+    return (
+        Path(resolve_project_path(project_root, root_value))
+        if root_value
+        else default
+    )
+
+
+def campaign_domain_paths(
+    metadata: dict[str, Any],
+    project_root: Path,
+    campaigns_root: Path,
+) -> dict[str, Path]:
+    return {
+        "release": path_at(
+            metadata,
+            project_root,
+            str(campaigns_root / "release"),
+            "campaigns",
+            "release",
+        ),
+        "promo": path_at(
+            metadata,
+            project_root,
+            str(campaigns_root / "promo"),
+            "campaigns",
+            "promo",
+        ),
     }
 
 
@@ -2684,8 +2735,12 @@ def collect_state_snapshot(
         "organization": mapping_summary(value_at(metadata, "organization")),
         "theme": {
             "path": theme_metadata_path_value(metadata, "path") or "",
-            "campaigns": theme_metadata_path_value(metadata, "campaigns") or "",
             "references": theme_metadata_path_value(metadata, "references") or "",
+        },
+        "campaigns": {
+            "root": str(paths["campaigns_root"]),
+            "release": str(paths["campaign_dirs"]["release"]),
+            "promo": str(paths["campaign_dirs"]["promo"]),
         },
         "state": {
             "plans": str(paths["plans_dir"]),

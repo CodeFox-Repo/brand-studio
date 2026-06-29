@@ -168,6 +168,8 @@ For image-first init:
 2. Find or create `marketing.harness.yaml` using metadata paths. If the file is
    missing, infer `project.id` from the repo directory name, use `root: .`, use
    `assets/marketing` for `project.marketingRoot`, use
+   `assets/marketing/campaigns/release` and
+   `assets/marketing/campaigns/promo` for campaign domains, use
    `.harness/marketing/out` for scratch output, and use `public/marketing` for
    approved assets. Omit `organization` unless the user supplied it or the repo
    already makes it clear.
@@ -228,8 +230,11 @@ brandStandard:
 
 theme:
   path: assets/marketing/theme.md
-  campaigns: assets/marketing/campaigns
   references: assets/marketing/references
+
+campaigns:
+  release: assets/marketing/campaigns/release
+  promo: assets/marketing/campaigns/promo
 
 skills:
   # Bind each capability to a locally installed producer skill (by name).
@@ -242,7 +247,7 @@ skills:
 
 campaign:
   name: launch
-  path: assets/marketing/campaigns/launch.campaign.yaml
+  path: assets/marketing/campaigns/promo/launch.campaign.yaml
 
 artifacts:
   scratch: .harness/marketing/out
@@ -287,6 +292,9 @@ Keep these roots separate:
 - **Project root:** the user's current product repo.
 - **Marketing root:** the product-owned source location from metadata, such as
   `assets/marketing`.
+- **Campaign domains:** release-note/changelog campaigns live under
+  `campaigns.release`; normal campaign-first promotion lives under
+  `campaigns.promo`.
 - **Org brand standard:** shared brand rules and base theme declared by
   `brandStandard`, usually from the org fork's `public/brand/`.
 - **Repo asset tree:** the repo-owned hierarchy under declared asset roots.
@@ -404,6 +412,9 @@ Use this repo state layout unless metadata overrides it:
 ```text
 assets/marketing/
   theme.md
+  campaigns/
+    release/
+    promo/
   accepted.yaml
   asset-state.yaml
   portfolios/

@@ -44,6 +44,8 @@ Product repos may keep optional sidecars next to the metadata-declared
 assets/marketing/theme.md
 assets/marketing/theme.meta.yaml
 assets/marketing/elements.yaml
+assets/marketing/campaigns/release/
+assets/marketing/campaigns/promo/
 assets/marketing/asset-state.yaml
 assets/marketing/accepted.yaml
 assets/marketing/portfolios/release/accepted.yaml
@@ -80,8 +82,10 @@ brandStandard:
   version: "1.0.0"
 theme:
   path: "assets/marketing/theme.md"
-  campaigns: "assets/marketing/campaigns"
   references: "assets/marketing/references"
+campaigns:
+  release: "assets/marketing/campaigns/release"
+  promo: "assets/marketing/campaigns/promo"
 skills:
   image: "gpt-image"
   design: "frontend-design"
@@ -208,7 +212,7 @@ objective: "Generate launch assets for feature X."
 inputs:
   state_preflight: ".harness/marketing/state/feature-x-launch.json"
   theme: "assets/marketing/theme.md"
-  campaign: "assets/marketing/campaigns/feature-x-launch.campaign.yaml"
+  campaign: "assets/marketing/campaigns/promo/feature-x-launch.campaign.yaml"
   asset_index: "assets/marketing/asset-state.yaml"
   accepted_corpus: "assets/marketing/portfolios/promo/accepted.yaml"
   references:
@@ -274,6 +278,7 @@ Release generation reads:
 
 ```text
 assets/marketing/theme.md
+assets/marketing/campaigns/release/
 assets/marketing/portfolios/release/accepted.yaml
 assets/marketing/portfolios/release/asset-state.yaml
 assets/marketing/portfolios/release/patterns.md
@@ -284,6 +289,7 @@ Promo generation reads:
 
 ```text
 assets/marketing/theme.md
+assets/marketing/campaigns/promo/
 assets/marketing/portfolios/promo/accepted.yaml
 assets/marketing/portfolios/promo/asset-state.yaml
 campaign brief and references

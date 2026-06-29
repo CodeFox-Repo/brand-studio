@@ -36,12 +36,15 @@ def metadata(root: Path) -> dict[str, object]:
         },
         "theme": {
             "path": "packages/branding/marketing/theme.md",
-            "campaigns": "packages/branding/marketing/campaigns",
             "references": "packages/branding/marketing/references",
+        },
+        "campaigns": {
+            "release": "packages/branding/marketing/campaigns/release",
+            "promo": "packages/branding/marketing/campaigns/promo",
         },
         "campaign": {
             "name": "launch",
-            "path": "packages/branding/marketing/campaigns/launch.campaign.yaml",
+            "path": "packages/branding/marketing/campaigns/promo/launch.campaign.yaml",
         },
         "artifacts": {
             "scratch": "packages/branding/.harness/out",
@@ -73,7 +76,7 @@ def test_metadata_supplies_validate_and_render_paths(tmp_path: Path) -> None:
     validate_args = launcher.apply_metadata_args(["validate"], meta)
     render_args = launcher.apply_metadata_args(["render", "--dry-run"], meta)
 
-    campaign = str(tmp_path / "packages/branding/marketing/campaigns/launch.campaign.yaml")
+    campaign = str(tmp_path / "packages/branding/marketing/campaigns/promo/launch.campaign.yaml")
     theme = str(tmp_path / "packages/branding/marketing/theme.md")
     outputs = str(tmp_path / "packages/branding/.harness/out")
     assert validate_args == ["validate", campaign, "--theme", theme]
@@ -94,7 +97,12 @@ def test_metadata_project_paths_are_root_relative(tmp_path: Path) -> None:
     paths = launcher.project_paths(metadata(tmp_path), tmp_path)
 
     assert paths["marketing_root"] == tmp_path / "packages/branding/marketing"
-    assert paths["campaigns_dir"] == tmp_path / "packages/branding/marketing/campaigns"
+    assert paths["campaigns_root"] == tmp_path / "packages/branding/marketing/campaigns"
+    assert paths["campaigns_dir"] == tmp_path / "packages/branding/marketing/campaigns/promo"
+    assert paths["campaign_dirs"] == {
+        "release": tmp_path / "packages/branding/marketing/campaigns/release",
+        "promo": tmp_path / "packages/branding/marketing/campaigns/promo",
+    }
     assert paths["references_dir"] == tmp_path / "packages/branding/marketing/references"
     assert paths["plans_dir"] == tmp_path / "packages/branding/marketing/plans"
     assert paths["asset_index"] == tmp_path / "packages/branding/marketing/asset-state.yaml"
@@ -120,7 +128,12 @@ def test_default_project_paths_match_documented_layout(tmp_path: Path) -> None:
     paths = launcher.project_paths({}, tmp_path)
 
     assert paths["marketing_root"] == tmp_path / "assets/marketing"
-    assert paths["campaigns_dir"] == tmp_path / "assets/marketing/campaigns"
+    assert paths["campaigns_root"] == tmp_path / "assets/marketing/campaigns"
+    assert paths["campaigns_dir"] == tmp_path / "assets/marketing/campaigns/promo"
+    assert paths["campaign_dirs"] == {
+        "release": tmp_path / "assets/marketing/campaigns/release",
+        "promo": tmp_path / "assets/marketing/campaigns/promo",
+    }
     assert paths["references_dir"] == tmp_path / "assets/marketing/references"
     assert paths["plans_dir"] == tmp_path / "assets/marketing/plans"
     assert paths["asset_index"] == tmp_path / "assets/marketing/asset-state.yaml"
@@ -156,6 +169,12 @@ def test_template_declares_org_brand_standard_without_required_brief() -> None:
     assert "accepted" not in data["brandStandard"]
     assert "assetState" not in data["brandStandard"]
     assert "campaign" not in data["brandStandard"]
+    assert data["campaigns"] == {
+        "release": "assets/marketing/campaigns/release",
+        "promo": "assets/marketing/campaigns/promo",
+    }
+    assert "campaigns" not in data["theme"]
+    assert data["campaign"]["path"] == "assets/marketing/campaigns/promo/launch.campaign.yaml"
     assert data["portfolios"]["release"] == {
         "accepted": "assets/marketing/portfolios/release/accepted.yaml",
         "assetState": "assets/marketing/portfolios/release/asset-state.yaml",
@@ -182,8 +201,11 @@ project:
   marketingRoot: assets/marketing
 theme:
   path: assets/marketing/theme.md
+campaigns:
+  release: assets/marketing/campaigns/release
+  promo: assets/marketing/campaigns/promo
 campaign:
-  path: assets/marketing/campaigns/launch.campaign.yaml
+  path: assets/marketing/campaigns/promo/launch.campaign.yaml
 """.lstrip(),
         encoding="utf-8",
     )
@@ -472,6 +494,16 @@ def test_repo_gen_release_wraps_release_render(tmp_path: Path) -> None:
         project / "packages/branding/.harness/out/release-v0-7-43/producer-context.json"
     )
     assert producer_context.is_file()
+    release_campaign = (
+        project
+        / "packages/branding/marketing/campaigns/release/release-v0-7-43.campaign.yaml"
+    )
+    promo_campaign = (
+        project
+        / "packages/branding/marketing/campaigns/promo/release-v0-7-43.campaign.yaml"
+    )
+    assert release_campaign.is_file()
+    assert not promo_campaign.exists()
     context = json.loads(producer_context.read_text(encoding="utf-8"))
     assert context["portfolio"]["domain"] == "release"
     assert context["portfolio"]["accepted"] == str(release_accepted)
@@ -772,8 +804,10 @@ organization:
   name: CodeFox Org
 theme:
   path: packages/branding/marketing/theme.md
-  campaigns: packages/branding/marketing/campaigns
   references: packages/branding/marketing/references
+campaigns:
+  release: packages/branding/marketing/campaigns/release
+  promo: packages/branding/marketing/campaigns/promo
 artifacts:
   scratch: packages/branding/.harness/out
   approved: packages/branding/public/marketing
@@ -809,6 +843,12 @@ sources:
     assert state_summaries["asset-state.yaml"]["pattern_count"] == 1
     assert snapshot["organization"]["id"] == "codefox-org"
     assert snapshot["theme"]["path"] == "packages/branding/marketing/theme.md"
+    assert snapshot["campaigns"]["release"] == str(
+        project / "packages/branding/marketing/campaigns/release"
+    )
+    assert snapshot["campaigns"]["promo"] == str(
+        project / "packages/branding/marketing/campaigns/promo"
+    )
     assert snapshot["portfolios"]["release"]["accepted"]["summary"]["accepted_count"] == 1
     assert snapshot["portfolios"]["release"]["asset_state"]["summary"]["pattern_count"] == 1
     assert snapshot["portfolios"]["release"]["patterns"]["exists"] is True
@@ -822,7 +862,7 @@ sources:
 def test_render_dry_run_uses_bundled_scripts(tmp_path: Path) -> None:
     project = tmp_path
     theme = project / "packages/branding/marketing/theme.md"
-    campaign = project / "packages/branding/marketing/campaigns/launch.campaign.yaml"
+    campaign = project / "packages/branding/marketing/campaigns/promo/launch.campaign.yaml"
     metadata_path = project / "marketing.harness.json"
     theme.parent.mkdir(parents=True)
     campaign.parent.mkdir(parents=True)
@@ -972,7 +1012,8 @@ alias:
     metadata_path.write_text(json.dumps(metadata(project)), encoding="utf-8")
 
     generated_campaign = (
-        project / "packages/branding/marketing/campaigns/release-v0-7-33.campaign.yaml"
+        project
+        / "packages/branding/marketing/campaigns/release/release-v0-7-33.campaign.yaml"
     )
     copy_path = project / "packages/branding/.harness/out/release-v0-7-33/copy.yaml"
     copy = subprocess.run(
@@ -1422,7 +1463,7 @@ sources: []
 def test_gpt_image_constraints_reject_unaligned_deliverable_size(tmp_path: Path) -> None:
     project = tmp_path
     theme = project / "assets/marketing/theme.md"
-    campaign = project / "assets/marketing/campaigns/launch.campaign.yaml"
+    campaign = project / "assets/marketing/campaigns/promo/launch.campaign.yaml"
     metadata_path = project / "marketing.harness.json"
     write_theme(theme, producer_id="gpt-image")
     campaign.parent.mkdir(parents=True)
@@ -1450,10 +1491,15 @@ deliverables:
                     },
                 "theme": {
                     "path": "assets/marketing/theme.md",
-                    "campaigns": "assets/marketing/campaigns",
                     "references": "assets/marketing/references",
                 },
-                "campaign": {"path": "assets/marketing/campaigns/launch.campaign.yaml"},
+                "campaigns": {
+                    "release": "assets/marketing/campaigns/release",
+                    "promo": "assets/marketing/campaigns/promo",
+                },
+                "campaign": {
+                    "path": "assets/marketing/campaigns/promo/launch.campaign.yaml"
+                },
                 "skills": {"image": "gpt-image"},
             }
         ),
